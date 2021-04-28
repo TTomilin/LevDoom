@@ -32,13 +32,13 @@ if __name__ == "__main__":
 
     # Config
     observe = 100
-    max_epochs = 50
+    max_epochs = 3000
     learning_rate = 0.0001
     memory_storage_size = 5000
     memory_replay_capacity = 50000
 
     # Frequencies
-    stats_save_freq = 10000
+    stats_save_freq = 1000
     model_save_freq = 5000
     memory_update_freq = 5000
 
@@ -46,8 +46,8 @@ if __name__ == "__main__":
     base_dir = '../../'
 
     # Specify model
-    algorithm = Algorithm.DFP
-    # algorithm = Algorithm.DUELING_DDQN
+    # algorithm = Algorithm.DFP
+    algorithm = Algorithm.DUELING_DDQN
     # algorithm = Algorithm.C51_DDQN
     # algorithm = Algorithm.DRQN
 
@@ -77,15 +77,14 @@ if __name__ == "__main__":
     # current_tasks = [HealthGathering.SubTask.STIMPACKS_POISON]
     # trained_task = HealthGathering.SubTask.MULTI
 
-    current_tasks = [HealthGathering.SubTask.SUPREME]
+    current_tasks = [DefendTheCenter.SubTask.GORE, DefendTheCenter.SubTask.MOSSY_BRICKS]
     trained_task = None
 
     # Create scenario(s)
-    multi_train = len(current_tasks) > 1
-    # scenarios = [DefendTheCenter(base_dir, algorithm, task, trained_task, window_visible, multi_train) for task in current_tasks]
-    scenarios = [HealthGathering(base_dir, algorithm, task, trained_task, window_visible, multi_train) for task in current_tasks]
-    # scenarios = [SeekAndKill(base_dir, algorithm, task, trained_task, window_visible, multi_train) for task in current_tasks]
-    # scenarios = [DodgeProjectiles(base_dir, algorithm, task, trained_task, window_visible, multi_train) for task in current_tasks]
+    scenarios = [DefendTheCenter(base_dir, algorithm, task, trained_task, window_visible, len(current_tasks)) for task in current_tasks]
+    # scenarios = [HealthGathering(base_dir, algorithm, task, trained_task, window_visible, len(current_tasks)) for task in current_tasks]
+    # scenarios = [SeekAndKill(base_dir, algorithm, task, trained_task, window_visible, len(current_tasks)) for task in current_tasks]
+    # scenarios = [DodgeProjectiles(base_dir, algorithm, task, trained_task, window_visible, len(current_tasks)) for task in current_tasks]
 
     # Define the dimensions
     img_rows, img_cols = 64, 64
@@ -131,8 +130,8 @@ if __name__ == "__main__":
                               storage_size = memory_storage_size, capacity = memory_replay_capacity)
 
     # Create Agent
-    # agent = DuelingDDQNAgent(memory, (img_rows, img_cols), state_size, action_size, model_path, model_version,
-    agent = DFPAgent(memory, (img_rows, img_cols), state_size, action_size, model_path, model_version,
+    agent = DuelingDDQNAgent(memory, (img_rows, img_cols), state_size, action_size, model_path, model_version,
+    # agent = DFPAgent(memory, (img_rows, img_cols), state_size, action_size, model_path, model_version,
                      [model, target_model], Lock(), observe)
 
     # Create Trainer

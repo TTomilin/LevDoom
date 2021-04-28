@@ -1,3 +1,5 @@
+from typing import Tuple, List
+
 import os
 import pickle
 import random  # Handling random number generation
@@ -7,20 +9,23 @@ from collections import deque
 
 
 class ExperienceReplay:
-    PER_e = 0.01  # Hyperparameter that we use to avoid some experiences to have 0 probability of being taken
-    PER_a = 0.6  # Hyperparameter that we use to make a tradeoff between taking only exp with high priority and sampling randomly
-    PER_b = 0.4  # importance-sampling, from initial value increasing to 1
-
-    PER_b_increment_per_sampling = 0.001
+    PER_e = 0.01  # Avoid some experiences to have 0 probability of being taken
+    PER_a = 0.6   # Make a trade-off between random sampling and only taking high priority exp
+    PER_b = 0.4   # Importance-sampling, from initial value increasing to 1
+    PER_b_increment = 0.001  # Importance-sampling increment per sampling
 
     absolute_error_upper = 1.  # clipped abs error
 
     def __init__(self, experience_path: str, save = False, prioritized = False, capacity = 10000,
                  storage_size = 5000, n_last_samples_included = 3):
         """
-        Simple replay buffer based on the collections.deque
-        :param capacity: the size of the buffer, i.e. the number of last transitions to save
-        :param include_last_samples: include a number of most recent observations into a sample batch
+        Experience replay buffer based on the collections.deque
+        ;param experience_path: Path in which to load the experience from and store it in
+        :param save: Flag to control the saving of the replay buffer
+        :param prioritized: Flag to select prioritized experience replay instead of epsilon-greedy
+        :param capacity: The size of the buffer, i.e. the number of last transitions to save
+        :param storage_size: How many transitions are saved to the disk
+        :param n_last_samples_included: Number of most recent observations included into the sample batch
         """
         self.capacity = capacity
         self.storage_size = storage_size
@@ -30,7 +35,7 @@ class ExperienceReplay:
         self.save_experience = save
         self.buffer = SumTree(capacity) if prioritized else deque(maxlen = capacity)
 
-    def add(self, experience: []) -> None:
+    def add(self, experience: Tuple) -> None:
         """
         Store the transition in a replay buffer
         Pop the leftmost transitions in case the experience replay capacity is breached
@@ -55,7 +60,7 @@ class ExperienceReplay:
         if self.buffer_size > self.capacity:
             self.buffer.popleft()
 
-    def sample(self, batch_size: int, trace_length = 1):
+    def sample(self, batch_size: int, trace_length = 1) -> List:
         """
         Sample a batch of transitions from replay buffer
         :param batch_size: size of the sampled batch
@@ -121,7 +126,7 @@ class ExperienceReplay:
     Update the priorities in the tree
     """
 
-    def batch_update(self, tree_idx, abs_errors):
+    def batch_update(self, tree_idx: int, abs_errors: float):
         abs_errors += self.PER_e  # convert to abs and avoid 0
         clipped_errors = np.minimum(abs_errors, self.absolute_error_upper)
         ps = np.power(clipped_errors, self.PER_a)
@@ -129,7 +134,7 @@ class ExperienceReplay:
         for ti, p in zip(tree_idx, ps):
             self.buffer.update(ti, p)
 
-    def load(self):
+    def load(self) -> None:
         """
         Load the experiences from external storage into local memory
         :return: None
@@ -139,7 +144,7 @@ class ExperienceReplay:
         if not self.prioritized:
             self.buffer = deque(self.buffer)
 
-    def save(self):
+    def save(self) -> None:
         """
         Save the [storage_size] experiences the into external storage
         to be able to continue training when restarting the program

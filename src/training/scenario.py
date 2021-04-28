@@ -25,7 +25,7 @@ class Scenario:
                  sub_task: SubTask,
                  trained_task: SubTask,
                  window_visible: bool,
-                 multi_train: bool,
+                 n_tasks: int,
                  sound_enabled = False,
                  render_hud = True,
                  len_vars_history = 5,
@@ -34,7 +34,7 @@ class Scenario:
                  ):
         self.name = name
         self.base_dir = base_dir
-        self.multi_train = multi_train
+        self.n_tasks = n_tasks
         self.trained_task = trained_task.name.lower() if trained_task else None
         self.task = sub_task.name.lower()
         self.alg_name = algorithm.name.lower()
@@ -58,7 +58,7 @@ class Scenario:
     def stats_path(self) -> str:
         if self.trained_task:
             sub_folder = f'test/{self.task}/{self.trained_task}'
-        elif self.multi_train:
+        elif self.n_tasks > 1:
             sub_folder = f'multi/{self.task}'
         else:
             sub_folder = f'train/{self.task}'
@@ -119,8 +119,8 @@ class DefendTheCenter(Scenario):
         RESIZED_ENEMIES = auto()
 
     def __init__(self, base_dir: str, algorithm: Algorithm, sub_task: SubTask, trained_task: SubTask,
-                 window_visible: bool, multi_train: bool) -> Scenario:
-        super().__init__('defend_the_center', base_dir, algorithm, sub_task, trained_task, window_visible, multi_train)
+                 window_visible: bool, n_tasks: int) -> Scenario:
+        super().__init__('defend_the_center', base_dir, algorithm, sub_task, trained_task, window_visible, n_tasks)
 
     @property
     def statistics_fields(self) -> []:
@@ -166,8 +166,8 @@ class HealthGathering(Scenario):
         STIMPACKS_POISON = auto()
 
     def __init__(self, base_dir: str, algorithm: Algorithm, sub_task: SubTask, trained_task: SubTask,
-                 window_visible: bool, multi_train: bool) -> Scenario:
-        super().__init__('health_gathering', base_dir, algorithm, sub_task, trained_task, window_visible, multi_train)
+                 window_visible: bool, n_tasks: int) -> Scenario:
+        super().__init__('health_gathering', base_dir, algorithm, sub_task, trained_task, window_visible, n_tasks)
 
     @property
     def statistics_fields(self) -> []:
@@ -192,8 +192,8 @@ class SeekAndKill(Scenario):
         RESIZED_ENEMIES = auto()
 
     def __init__(self, base_dir: str, algorithm: Algorithm, sub_task: SubTask, trained_task: SubTask,
-                 window_visible: bool, multi_train: bool) -> Scenario:
-        super().__init__('seek_and_kill', base_dir, algorithm, sub_task, trained_task, window_visible, multi_train)
+                 window_visible: bool, n_tasks: int) -> Scenario:
+        super().__init__('seek_and_kill', base_dir, algorithm, sub_task, trained_task, window_visible, n_tasks)
         self.max_velocity = -np.inf
 
     @property
@@ -248,8 +248,8 @@ class DodgeProjectiles(Scenario):
         ARACHNOTRON = auto()
 
     def __init__(self, base_dir: str, algorithm: Algorithm, sub_task: SubTask, trained_task: SubTask,
-                 window_visible: bool, multi_train: bool) -> Scenario:
-        super().__init__('dodge_projectiles', base_dir, algorithm, sub_task, trained_task, window_visible, multi_train)
+                 window_visible: bool, n_tasks: int) -> Scenario:
+        super().__init__('dodge_projectiles', base_dir, algorithm, sub_task, trained_task, window_visible, n_tasks)
 
     def shape_reward(self, reward: float, game_variables: deque) -> float:
         if len(game_variables) < 2:

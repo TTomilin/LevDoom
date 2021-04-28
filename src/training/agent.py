@@ -144,7 +144,7 @@ class Agent:
         Use local model version to prevent multiple threads saving the same model
         :return: None
         """
-        from src.training.utils import next_model_version
+        from utils import next_model_version
 
         if self.local_model_version.version < self.model_version.version:
             self.local_model_version.version = self.model_version.version

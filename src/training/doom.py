@@ -47,14 +47,12 @@ class Doom:
     
         current_state = agent.transform_initial_state(game.get_state())
 
-        # Number of medkit pickup as measurement
-        medkit = 0
-
-        # Number of poison pickup as measurement
+        # Number of health kits and poison pickup as measurements
+        health_kits = 0
         poison = 0
 
         # Initial normalized measurements
-        measurements = np.array([0.0, 0.0, 0.0])
+        measurements = scenario.get_measurements(game_variables, health_kit = health_kits, poison = poison)
 
         while n_game < self.max_epochs:
     
@@ -94,7 +92,7 @@ class Doom:
                 if previous_vars[0] - current_vars[0] > 8:  # Pick up Poison
                     poison += 1
                 if current_vars[0] > previous_vars[0]:  # Pick up Health Pack
-                    medkit += 1
+                    health_kits += 1
     
             reward = scenario.shape_reward(reward, game_variables)
             total_reward += reward
@@ -102,13 +100,13 @@ class Doom:
             # Save the sample <s, a, r, s', t> to the episode buffer
             if train:
                 agent.memory.add((current_state, action_idx, reward, new_state, measurements, terminated))
-                measurements = np.array([game_variables[-1][0] / 30.0, medkit / 10.0, poison])  # Measurement after transition
+                measurements = scenario.get_measurements(game_variables, health_kit = health_kits, poison = poison)
     
             current_state = new_state
             agent.time_step += 1
 
             if terminated:
-                medkit = 0
+                health_kits = 0
                 poison = 0
     
             # Save agent's performance statistics

@@ -1,40 +1,22 @@
 from collections import deque
+from ctypes import Array
 from enum import Enum, auto
 
 import numpy as np
 from scipy.spatial import distance
+from typing import Dict
 from vizdoom import *
 
 from model import Algorithm
 
 
-class PickleableDoomGame(DoomGame):
-    def __setstate__(self, state):
-        print('Setting DoomGame state', state)
-        self.__dict__.update(state)
-
-    def __getstate__(self):
-        state = self.__dict__.copy()
-        print('Getting DoomGame state', state)
-        return state
-
-
 class Scenario:
     """ Generic Scenario.
-    Extend this abstract class to define new scenarios.
+    Extend this abstract scenario class to define new VizDoom scenarios
     """
 
     class SubTask(Enum):
         DEFAULT = auto()
-
-    def __setstate__(self, state):
-        print('Setting Agent state', state)
-        self.__dict__.update(state)
-
-    def __getstate__(self):
-        state = self.__dict__.copy()
-        print('Getting Scenario state', state)
-        return state
 
     def __init__(self,
                  name: str,
@@ -84,19 +66,28 @@ class Scenario:
         return f'{self.base_dir}scenarios/{self.name}/{self.full_name}.wad'
 
     @property
-    def statistics_fields(self) -> []:
+    def statistics_fields(self) -> Array:
         return ['frames_alive', 'duration', 'reward']
 
     def shape_reward(self, reward: float, game_vars: deque) -> float:
         return reward
 
-    def additional_stats(self, game_vars: []) -> {}:
+    def additional_stats(self, game_vars: Array) -> Dict:
         """
         Implement this method to provide extra scenario specific statistics
-        :param game_vars: game variables of the last [len_vars_history] episodes
-        :return: dictionary of added statistics
+        :param game_vars: Game variables of the last [len_vars_history] episodes
+        :return: Dictionary of added statistics
         """
         return {}
+
+    def get_measurements(self, game_vars: Array, **kwargs) -> np.ndarray:
+        """
+        Retrieve the measurement after transition for the direct future prediction algorithm
+        :param game_vars: Game variables of the last [len_vars_history] episodes
+        :param kwargs: Additional keyword arguments to calculate the measurements
+        :return: The relevant measurements of the corresponding scenario
+        """
+        raise NotImplementedError
 
 
 class DefendTheCenter(Scenario):
@@ -143,42 +134,14 @@ class DefendTheCenter(Scenario):
         return {'kill_count': game_vars[-1][SKGameVariable.KILL_COUNT.value],
                 'ammo_left': game_vars[-1][DTCGameVariable.AMMO2.value]}
 
+    def get_measurements(self, game_vars: Array, **kwargs) -> np.ndarray:
+        pass
+
 
 class DTCGameVariable(Enum):
     KILL_COUNT = 0
     AMMO2 = 1
     HEALTH = 2
-
-
-class DodgeProjectiles(Scenario):
-    class SubTask(Enum):
-        MULTI = auto()
-        BARONS = auto()
-        DEFAULT = auto()
-        MANCUBUS = auto()
-        ROCK_RED = auto()
-        REVENANTS = auto()
-        CACODEMONS = auto()
-        TALL_AGENT = auto()
-        ARACHNOTRON = auto()
-
-    def __init__(self, base_dir: str, algorithm: Algorithm, sub_task = SubTask.DEFAULT, trained_task: SubTask = None,
-                 window_visible = False):
-        super().__init__('dodge_projectiles', base_dir, algorithm, sub_task, trained_task, window_visible)
-
-    def shape_reward(self, reward: float, game_variables: deque) -> float:
-        if len(game_variables) < 2:
-            return reward
-        # +0.01 living reward already configured
-        current_vars = game_variables[-1]
-        previous_vars = game_variables[-2]
-        if current_vars[DPGameVariable.HEALTH.value] < previous_vars[DPGameVariable.HEALTH.value]:
-            reward -= 1  # Loss of HEALTH
-        return reward
-
-
-class DPGameVariable(Enum):
-    HEALTH = 0
 
 
 class HealthGathering(Scenario):
@@ -202,6 +165,9 @@ class HealthGathering(Scenario):
         fields = super().statistics_fields
         fields.extend(['health_found'])
         return fields
+
+    def get_measurements(self, game_variables: Array, **kwargs) -> np.ndarray:
+        return np.array([game_variables[-1][0] / 30.0, kwargs['health_kit'] / 10.0, kwargs['poison']])
 
 
 class SeekAndKill(Scenario):
@@ -258,3 +224,34 @@ class SKGameVariable(Enum):
     HEALTH = 2
     POSITION_X = 3
     POSITION_Y = 4
+
+
+class DodgeProjectiles(Scenario):
+    class SubTask(Enum):
+        MULTI = auto()
+        BARONS = auto()
+        DEFAULT = auto()
+        MANCUBUS = auto()
+        ROCK_RED = auto()
+        REVENANTS = auto()
+        CACODEMONS = auto()
+        TALL_AGENT = auto()
+        ARACHNOTRON = auto()
+
+    def __init__(self, base_dir: str, algorithm: Algorithm, sub_task = SubTask.DEFAULT, trained_task: SubTask = None,
+                 window_visible = False):
+        super().__init__('dodge_projectiles', base_dir, algorithm, sub_task, trained_task, window_visible)
+
+    def shape_reward(self, reward: float, game_variables: deque) -> float:
+        if len(game_variables) < 2:
+            return reward
+        # +0.01 living reward already configured
+        current_vars = game_variables[-1]
+        previous_vars = game_variables[-2]
+        if current_vars[DPGameVariable.HEALTH.value] < previous_vars[DPGameVariable.HEALTH.value]:
+            reward -= 1  # Loss of HEALTH
+        return reward
+
+
+class DPGameVariable(Enum):
+    HEALTH = 0

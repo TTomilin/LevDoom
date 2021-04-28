@@ -4,7 +4,7 @@ from enum import Enum, auto
 
 import numpy as np
 from scipy.spatial import distance
-from typing import Dict
+from typing import Dict, List
 from vizdoom import *
 
 from model import Algorithm
@@ -25,6 +25,7 @@ class Scenario:
                  sub_task: SubTask,
                  trained_task: SubTask,
                  window_visible: bool,
+                 multi_train: bool,
                  sound_enabled = False,
                  render_hud = True,
                  len_vars_history = 5,
@@ -33,6 +34,7 @@ class Scenario:
                  ):
         self.name = name
         self.base_dir = base_dir
+        self.multi_train = multi_train
         self.trained_task = trained_task.name.lower() if trained_task else None
         self.task = sub_task.name.lower()
         self.alg_name = algorithm.name.lower()
@@ -54,7 +56,14 @@ class Scenario:
 
     @property
     def stats_path(self) -> str:
-        sub_folder = f'test/{self.task}/{self.trained_task}' if self.trained_task else f'train/{self.task}'
+        if self.trained_task:
+            sub_folder = f'test/{self.task}/{self.trained_task}'
+        elif self.multi_train:
+            sub_folder = f'multi/{self.task}'
+        else:
+            sub_folder = f'train/{self.task}'
+        # sub_folder = f'test/{self.task}/{self.trained_task}' if self.trained_task \
+        #     else f'multi/{self.task}' if self.multi_train else f'train/{self.task}'
         return f'{self.base_dir}statistics/{self.name}/{sub_folder}.json'
 
     @property
@@ -66,13 +75,13 @@ class Scenario:
         return f'{self.base_dir}scenarios/{self.name}/{self.full_name}.wad'
 
     @property
-    def statistics_fields(self) -> Array:
+    def statistics_fields(self) -> List[str]:
         return ['frames_alive', 'duration', 'reward']
 
     def shape_reward(self, reward: float, game_vars: deque) -> float:
         return reward
 
-    def additional_stats(self, game_vars: Array) -> Dict:
+    def additional_stats(self, game_vars: List[int]) -> Dict:
         """
         Implement this method to provide extra scenario specific statistics
         :param game_vars: Game variables of the last [len_vars_history] episodes
@@ -80,7 +89,7 @@ class Scenario:
         """
         return {}
 
-    def get_measurements(self, game_vars: Array, **kwargs) -> np.ndarray:
+    def get_measurements(self, game_vars: List[int], **kwargs) -> np.ndarray:
         """
         Retrieve the measurement after transition for the direct future prediction algorithm
         :param game_vars: Game variables of the last [len_vars_history] episodes
@@ -109,9 +118,9 @@ class DefendTheCenter(Scenario):
         FLYING_ENEMIES = auto()
         RESIZED_ENEMIES = auto()
 
-    def __init__(self, base_dir: str, algorithm: Algorithm, sub_task = SubTask.DEFAULT, trained_task: SubTask = None,
-                 window_visible = False) -> Scenario:
-        super().__init__('defend_the_center', base_dir, algorithm, sub_task, trained_task, window_visible)
+    def __init__(self, base_dir: str, algorithm: Algorithm, sub_task: SubTask, trained_task: SubTask,
+                 window_visible: bool, multi_train: bool) -> Scenario:
+        super().__init__('defend_the_center', base_dir, algorithm, sub_task, trained_task, window_visible, multi_train)
 
     @property
     def statistics_fields(self) -> []:
@@ -156,9 +165,9 @@ class HealthGathering(Scenario):
         RESIZED_KITS = auto()
         STIMPACKS_POISON = auto()
 
-    def __init__(self, base_dir: str, algorithm: Algorithm, sub_task = SubTask.DEFAULT, trained_task: SubTask = None,
-                 window_visible = False) -> Scenario:
-        super().__init__('health_gathering', base_dir, algorithm, sub_task, trained_task, window_visible)
+    def __init__(self, base_dir: str, algorithm: Algorithm, sub_task: SubTask, trained_task: SubTask,
+                 window_visible: bool, multi_train: bool) -> Scenario:
+        super().__init__('health_gathering', base_dir, algorithm, sub_task, trained_task, window_visible, multi_train)
 
     @property
     def statistics_fields(self) -> []:
@@ -182,9 +191,9 @@ class SeekAndKill(Scenario):
         MIXED_ENEMIES = auto()
         RESIZED_ENEMIES = auto()
 
-    def __init__(self, base_dir: str, algorithm: Algorithm, sub_task = SubTask.DEFAULT, trained_task: SubTask = None,
-                 window_visible = False) -> Scenario:
-        super().__init__('seek_and_kill', base_dir, algorithm, sub_task, trained_task, window_visible)
+    def __init__(self, base_dir: str, algorithm: Algorithm, sub_task: SubTask, trained_task: SubTask,
+                 window_visible: bool, multi_train: bool) -> Scenario:
+        super().__init__('seek_and_kill', base_dir, algorithm, sub_task, trained_task, window_visible, multi_train)
         self.max_velocity = -np.inf
 
     @property
@@ -238,9 +247,9 @@ class DodgeProjectiles(Scenario):
         TALL_AGENT = auto()
         ARACHNOTRON = auto()
 
-    def __init__(self, base_dir: str, algorithm: Algorithm, sub_task = SubTask.DEFAULT, trained_task: SubTask = None,
-                 window_visible = False):
-        super().__init__('dodge_projectiles', base_dir, algorithm, sub_task, trained_task, window_visible)
+    def __init__(self, base_dir: str, algorithm: Algorithm, sub_task: SubTask, trained_task: SubTask,
+                 window_visible: bool, multi_train: bool) -> Scenario:
+        super().__init__('dodge_projectiles', base_dir, algorithm, sub_task, trained_task, window_visible, multi_train)
 
     def shape_reward(self, reward: float, game_variables: deque) -> float:
         if len(game_variables) < 2:

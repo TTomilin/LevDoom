@@ -81,12 +81,11 @@ if __name__ == "__main__":
     trained_task = None
 
     # Create scenario(s)
-    # scenarios = [DefendTheCenter(base_dir, algorithm, task, trained_task, window_visible) for task in current_tasks]
-    # scenarios = [HealthGathering(base_dir, algorithm, task, trained_task, window_visible) for task in current_tasks]
-    # scenarios = [SeekAndKill(base_dir, algorithm, task, trained_task, window_visible) for task in current_tasks]
-    # scenarios = [DodgeProjectiles(base_dir, algorithm, task, trained_task, window_visible) for task in current_tasks]
-    # scenarios = [DefendTheCenter(base_dir, algorithm, task, window_visible = window_visible) for task in current_tasks]
-    scenarios = [HealthGathering(base_dir, algorithm, task, window_visible = window_visible) for task in current_tasks]
+    multi_train = len(current_tasks) > 1
+    # scenarios = [DefendTheCenter(base_dir, algorithm, task, trained_task, window_visible, multi_train) for task in current_tasks]
+    scenarios = [HealthGathering(base_dir, algorithm, task, trained_task, window_visible, multi_train) for task in current_tasks]
+    # scenarios = [SeekAndKill(base_dir, algorithm, task, trained_task, window_visible, multi_train) for task in current_tasks]
+    # scenarios = [DodgeProjectiles(base_dir, algorithm, task, trained_task, window_visible, multi_train) for task in current_tasks]
 
     # Define the dimensions
     img_rows, img_cols = 64, 64

@@ -12,10 +12,10 @@ class AsynchronousTrainer:
                  train_lock: Lock,
                  decay_epsilon = False,
                  initial_epsilon = 1.0,
-                 final_epsilon = 0.0001,
+                 final_epsilon = 0.001,
                  model_save_freq = 5000,
                  memory_update_freq = 5000,
-                 train_report_freq = 100
+                 train_report_freq = 1000
                  ):
 
         self.agent = agent

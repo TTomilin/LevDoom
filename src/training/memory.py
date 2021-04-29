@@ -43,9 +43,12 @@ class ExperienceReplay:
         :return: None
         """
         if not self.prioritized:
-            self.buffer.appendleft(experience)
+            # self.buffer.appendleft(experience)
+            # if self.buffer_size > self.capacity:
+            #     self.buffer.pop()
+            self.buffer.append(experience)
             if self.buffer_size > self.capacity:
-                self.buffer.pop()
+                self.buffer.popleft()
             return
 
         # Find the max priority
@@ -57,8 +60,6 @@ class ExperienceReplay:
             max_priority = self.absolute_error_upper
 
         self.buffer.add(max_priority, experience)  # set the max p for new p
-        if self.buffer_size > self.capacity:
-            self.buffer.popleft()
 
     def sample(self, batch_size: int, trace_length = 1) -> List:
         """
@@ -80,25 +81,24 @@ class ExperienceReplay:
                     batch[i] = self.buffer[i]
             return batch
 
-        n = batch_size  # TODO verify
-
         # Create a sample array that will contains the minibatch
         memory_b = []
 
-        b_idx, b_ISWeights = np.empty((n,), dtype = np.int32), np.empty((n, 1), dtype = np.float32)
+        b_idx, b_ISWeights = np.empty((batch_size,), dtype = np.int32), np.empty((batch_size, 1), dtype = np.float32)
 
         # Calculate the priority segment
         # Here, as explained in the paper, we divide the Range[0, ptotal] into n ranges
-        priority_segment = self.buffer.total_priority / n  # priority segment
+        priority_segment = self.buffer.total_priority / batch_size  # priority segment
 
         # Increase the PER_b each time a new minibatch is sampled
-        self.PER_b = np.min([1., self.PER_b + self.PER_b_increment_per_sampling])  # max = 1
+        self.PER_b = np.min([1., self.PER_b + self.PER_b_increment])  # max = 1
 
         # Calculating the max_weight
         p_min = np.min(self.buffer.tree[-self.buffer.capacity:]) / self.buffer.total_priority
-        max_weight = 0 if p_min == 0 else (p_min * n) ** (-self.PER_b)
+        max_weight = 1e-6 if p_min == 0 else (p_min * batch_size) ** (-self.PER_b)
+        # max_weight = 0 if p_min == 0 else (p_min * batch_size) ** (-self.PER_b)
 
-        for i in range(n):
+        for i in range(batch_size):
             """
             A value is uniformly sampled from each range
             """
@@ -114,7 +114,7 @@ class ExperienceReplay:
             sampling_probabilities = priority / self.buffer.total_priority
 
             #  IS = (1/N * 1/P(i))**b /max wi == (N*P(i))**-b  /max wi
-            b_ISWeights[i, 0] = np.power(n * sampling_probabilities, -self.PER_b) / max_weight
+            b_ISWeights[i, 0] = np.power(batch_size * sampling_probabilities, -self.PER_b) / max_weight
 
             b_idx[i] = index
 
@@ -126,7 +126,7 @@ class ExperienceReplay:
     Update the priorities in the tree
     """
 
-    def batch_update(self, tree_idx: int, abs_errors: float):
+    def batch_update(self, tree_idx: np.ndarray, abs_errors):
         abs_errors += self.PER_e  # convert to abs and avoid 0
         clipped_errors = np.minimum(abs_errors, self.absolute_error_upper)
         ps = np.power(clipped_errors, self.PER_a)
@@ -167,7 +167,7 @@ class ExperienceReplay:
         """
         :return: Current size of the buffer
         """
-        return len(self.buffer)
+        return self.buffer.data_pointer if type(self.buffer) == SumTree else len(self.buffer)
 
 
 class SumTree(object):

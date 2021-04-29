@@ -51,11 +51,16 @@ class Doom:
         health_kits = 0
         poison = 0
 
+        improved_epsilon = 1.0  # TODO remove after testing PER
+
         # Initial normalized measurements
         measurements = scenario.get_measurements(game_variables, health_kit = health_kits, poison = poison)
 
         while n_game < self.max_epochs:
-    
+
+            # With ϵ select a random action atat, otherwise select a = argmaxQ(st,a)
+            improved_epsilon = 0.01 + (1.0 - 0.01) * np.exp(-0.00005 * agent.time_step)
+
             action_idx = agent.get_action(current_state, measurements)
             game.set_action(idx_to_action(action_idx, agent.action_size))
             game.advance_action(agent.frames_per_action)
@@ -69,6 +74,7 @@ class Doom:
     
                 # Append statistics
                 statistics.append_episode(n_game, agent.time_step, frames_alive, duration, total_reward, game_variables)
+                # print(f'Improved epsilon {improved_epsilon:.4f}')
     
                 # Reset counters
                 frames_alive, total_reward = 0, 0

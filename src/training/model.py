@@ -1,11 +1,12 @@
 from enum import Enum, auto
 
-from keras.layers import BatchNormalization, Activation
+from keras.layers import BatchNormalization, Activation, Masking, Embedding, RepeatVector
 from tensorflow.keras import backend as K
 from tensorflow.keras.layers import Flatten, Input, Dense, Conv2D, Lambda, TimeDistributed, LSTM, add, concatenate
 from tensorflow.keras.losses import Huber, categorical_crossentropy
 from tensorflow.keras.models import Model, Sequential
 from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.initializers import he_normal
 
 
 class ModelVersion:
@@ -25,9 +26,12 @@ class Algorithm(Enum):
 
 def build_base_cnn(input_shape):
     state_input = Input(shape = input_shape)
+    # x = Conv2D(32, (8, 8), strides = (4, 4), activation = 'relu', kernel_initializer = he_normal())(state_input)
+    # x = Conv2D(64, (4, 4), strides = (2, 2), activation = 'relu', kernel_initializer = he_normal())(x)
+    # x = Conv2D(64, (3, 3), strides = (1, 1), activation = 'relu', kernel_initializer = he_normal())(x)
     x = Conv2D(32, (8, 8), strides = (4, 4), activation = 'relu')(state_input)
     x = Conv2D(64, (4, 4), strides = (2, 2), activation = 'relu')(x)
-    x = Conv2D(64, (3, 3), activation = 'relu')(x)
+    x = Conv2D(64, (3, 3), strides = (1, 1), activation = 'relu')(x)
     x = Flatten()(x)
     return state_input, x
 
@@ -52,6 +56,51 @@ def dueling_dqn(input_shape: [], action_size: int, learning_rate = 0.0001) -> Mo
 
     model = Model(inputs = state_input, outputs = state_action_value)
     model.compile(loss = Huber(), optimizer = Adam(lr = learning_rate))
+    return model
+
+
+# Model from https://github.com/itaicaspi/keras-dqn-doom/blob/master/main.py
+def dueling_drqn(input_shape: [], action_size: int, learning_rate = 0.0001) -> Model:
+    max_action_sequence_length = 5
+    input_action_space_size = action_size + 2
+    end_token = action_size + 1
+    history_length = 4
+    state_height, state_width = 64, 64
+
+    state_model_input = Input(shape = (history_length, state_height, state_width))
+    state_model = Conv2D(16, (3, 3), stride = (2, 2), activation = 'relu', input_shape = (history_length, state_height, state_width), init = 'uniform', trainable = True)(state_model_input)
+    state_model = Conv2D(32, (3, 3), stride = (2, 2), activation = 'relu', init = 'uniform', trainable = True)(state_model)
+    state_model = Conv2D(64, (3, 3), stride = (2, 2), activation = 'relu', init = 'uniform', trainable = True)(state_model)
+    state_model = Conv2D(128, (3, 3), stride = (1, 1), activation = 'relu', init = 'uniform')(state_model)
+    state_model = Conv2D(256, (3, 3), stride = (1, 1), activation = 'relu', init = 'uniform')(state_model)
+    state_model = Flatten()(state_model)
+    state_model = Dense(512, activation = 'relu', init = 'uniform')(state_model)
+    state_model = RepeatVector(max_action_sequence_length)(state_model)
+
+    action_model_input = Input(shape = (max_action_sequence_length,))
+    action_model = Masking(mask_value = end_token, input_shape = (max_action_sequence_length,))(action_model_input)
+    action_model = Embedding(input_dim = input_action_space_size, output_dim = 100, init = 'uniform', input_length = max_action_sequence_length)(action_model)
+    action_model = TimeDistributed(Dense(100, init = 'uniform', activation = 'relu'))(action_model)
+
+    x = concatenate([state_model, action_model], concat_axis = -1)
+    x = LSTM(512, return_sequences = True, activation = 'relu', init = 'uniform')(x)
+
+    # state value tower - V
+    state_value = TimeDistributed(Dense(256, activation = 'relu', init = 'uniform'))(x)
+    state_value = TimeDistributed(Dense(1, init = 'uniform'))(state_value)
+    state_value = Lambda(lambda s: K.repeat_elements(s, rep = action_size, axis = 2))(state_value)
+
+    # Action advantage tower - A
+    action_advantage = TimeDistributed(Dense(256, activation = 'relu', init = 'uniform'))(x)
+    action_advantage = TimeDistributed(Dense(action_size, init = 'uniform'))(action_advantage)
+    action_advantage = TimeDistributed(Lambda(lambda a: a - K.mean(a, keepdims = True, axis = -1)))(action_advantage)
+
+    # Merge to state-action value function Q
+    state_action_value = add([state_value, action_advantage])
+
+    model = Model(input = [state_model_input, action_model_input], output = state_action_value)
+    model.compile(Adam(lr = learning_rate), Huber())
+    model.summary()
     return model
 
 

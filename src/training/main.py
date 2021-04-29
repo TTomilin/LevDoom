@@ -24,21 +24,21 @@ if __name__ == "__main__":
     load_model = False
     load_experience = False
     save_experience = False
-    prioritized_replay = False
+    prioritized_replay = True
     append_statistics = False
     decay_epsilon = True
-    window_visible = True
+    window_visible = False
     train = True
 
     # Config
-    observe = 100
+    observe = 2000
     max_epochs = 3000
     learning_rate = 0.0001
     memory_storage_size = 5000
-    memory_replay_capacity = 50000
+    memory_replay_capacity = 20000
 
     # Frequencies
-    stats_save_freq = 1000
+    stats_save_freq = 5000
     model_save_freq = 5000
     memory_update_freq = 5000
 
@@ -74,10 +74,10 @@ if __name__ == "__main__":
     # trained_task = SeekAndKill.SubTask.MULTI
     # current_tasks = [DodgeProjectiles.SubTask.MANCUBUS]
     # trained_task = DodgeProjectiles.SubTask.REVENANTS
-    # current_tasks = [HealthGathering.SubTask.STIMPACKS_POISON]
-    # trained_task = HealthGathering.SubTask.MULTI
+    # current_tasks = [HealthGathering.SubTask.SUPREME]
+    # trained_task = HealthGathering.SubTask.SUPREME
 
-    current_tasks = [DefendTheCenter.SubTask.GORE, DefendTheCenter.SubTask.MOSSY_BRICKS]
+    current_tasks = [DefendTheCenter.SubTask.DEFAULT]
     trained_task = None
 
     # Create scenario(s)
@@ -88,6 +88,7 @@ if __name__ == "__main__":
 
     # Define the dimensions
     img_rows, img_cols = 64, 64
+    # img_rows, img_cols = 84, 84
     default_scenario = scenarios[0]
     action_size = default_scenario.game.get_available_buttons_size()
     state_size = get_input_shape(algorithm, img_rows, img_cols)

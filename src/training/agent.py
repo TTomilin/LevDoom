@@ -1,14 +1,14 @@
 import copy
+
 import itertools
 import math
-import random  # Handling random number generation
-from threading import Lock
-from typing import Tuple
-
 import numpy as np  # Handle matrices
+import random  # Handling random number generation
 import skimage.color
 import skimage.transform
 from numpy import ndarray
+from threading import Lock
+from typing import Tuple
 
 from memory import ExperienceReplay
 from model import ModelVersion
@@ -326,21 +326,42 @@ class DuelingDDQNAgent(Agent):
             states_next[i, :, :, :] = mini_batch[i][3]
             done.append(mini_batch[i][-1])
 
+        # Predict Q-values for starting state using the main network
         target = self.model.predict(states)
+        target_old = np.array(target)
+
+        # Predict best action in ending state using the main network
+        target_next = self.model.predict(states_next)
+
+        # Predict Q-values for ending state using the target network
         target_val = self.target_model.predict(states_next)
 
         for i in range(batch_size):
-            terminal = 0 if done[i] else 1  # Terminal state update only receives no future rewards
-            best_action_value = np.max(
-                target_val[i])  # Value of the best actions for the next state according to the target network
+            # Terminal state update only receives no future rewards
+            terminal = 0 if done[i] else 1
+
+            # Value of the best actions for the next state according to the target network
+            best_action_value = np.max(target_val[i])
+
             target[i][actions[i]] = rewards[i] + terminal * self.gamma * best_action_value
 
+            continue
+            # TODO try the version below
+            # current Q Network selects the action
+            # a'_max = argmax_a' Q(s', a')
+            a = np.argmax(target_next[i])
+            # target Q Network evaluates the action
+            # Q_max = Q_target(s', a'_max)
+            target[i][actions[i]] = rewards[i] + terminal * self.gamma * (target_val[i][a])
+
         with self.lock:
+            # TODO try with sample weights
+            # loss = self.model.train_on_batch(states, target, sample_weight = np.squeeze(ISWeights_mb))
             loss = self.model.train_on_batch(states, target)
 
-        # Update priority
         if self.memory.prioritized:
-            absolute_errors = loss  # ???
+            # Update priority in the SumTree
+            absolute_errors = np.abs(np.mean(target_old - target, axis = 1))
             self.memory.batch_update(tree_idx, absolute_errors)
 
         # Update the target model to be same with model
@@ -543,11 +564,13 @@ class DFPAgent(Agent):
                             future_measurements += list((self.memory.buffer[idx + j][4] - self.memory.buffer[idx][4]))
                             last_offset = j
                         else:
-                            future_measurements += list((self.memory.buffer[idx + last_offset][4] - self.memory.buffer[idx][4]))
+                            future_measurements += list(
+                                (self.memory.buffer[idx + last_offset][4] - self.memory.buffer[idx][4]))
                 else:
                     done = True
                     if j in self.timesteps:  # 1,2,4,8,16,32
-                        future_measurements += list((self.memory.buffer[idx + last_offset][4] - self.memory.buffer[idx][4]))
+                        future_measurements += list(
+                            (self.memory.buffer[idx + last_offset][4] - self.memory.buffer[idx][4]))
             f_action_target[i, :] = np.array(future_measurements)
             state_input[i, :, :, :] = self.memory.buffer[idx][0]
             measurement_input[i, :] = self.memory.buffer[idx][4]

@@ -29,7 +29,6 @@ class Scenario:
                  sound_enabled = False,
                  render_hud = True,
                  len_vars_history = 5,
-                 mode = Mode.PLAYER,
                  screen_resolution = ScreenResolution.RES_640X480
                  ):
         self.name = name
@@ -46,7 +45,6 @@ class Scenario:
         self.game.set_doom_scenario_path(self.scenario_path)
         self.game.set_sound_enabled(sound_enabled)
         self.game.set_window_visible(window_visible)
-        self.game.set_mode(mode)
         self.game.set_screen_resolution(screen_resolution)
         self.game.set_render_hud(render_hud)
 

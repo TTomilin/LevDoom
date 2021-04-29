@@ -61,7 +61,7 @@ class AsynchronousTrainer:
 
             # Print mean Q_max & mean loss
             if not train_iteration % self.train_report_freq:
-                print(f'Training Iteration {train_iteration} / Mean Q_max: {np.mean(Q_values):.2f} / Mean Loss: {np.mean(losses):.5f}')
+                print(f'Training Report / Iteration {train_iteration} / Mean Q_max: {np.mean(Q_values):.2f} / Mean Loss: {np.mean(losses):.5f}')
                 Q_values = []
                 losses = []
 

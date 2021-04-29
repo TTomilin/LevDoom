@@ -26,8 +26,8 @@ class Scenario:
                  trained_task: SubTask,
                  window_visible: bool,
                  n_tasks: int,
-                 sound_enabled = False,
                  render_hud = True,
+                 sound_enabled = False,
                  len_vars_history = 5,
                  screen_resolution = ScreenResolution.RES_640X480
                  ):
@@ -117,8 +117,8 @@ class DefendTheCenter(Scenario):
         RESIZED_ENEMIES = auto()
 
     def __init__(self, base_dir: str, algorithm: Algorithm, sub_task: SubTask, trained_task: SubTask,
-                 window_visible: bool, n_tasks: int) -> Scenario:
-        super().__init__('defend_the_center', base_dir, algorithm, sub_task, trained_task, window_visible, n_tasks)
+                 window_visible: bool, n_tasks: int, render_hud: bool) -> Scenario:
+        super().__init__('defend_the_center', base_dir, algorithm, sub_task, trained_task, window_visible, n_tasks, render_hud)
 
     @property
     def statistics_fields(self) -> []:
@@ -164,8 +164,8 @@ class HealthGathering(Scenario):
         STIMPACKS_POISON = auto()
 
     def __init__(self, base_dir: str, algorithm: Algorithm, sub_task: SubTask, trained_task: SubTask,
-                 window_visible: bool, n_tasks: int) -> Scenario:
-        super().__init__('health_gathering', base_dir, algorithm, sub_task, trained_task, window_visible, n_tasks)
+                 window_visible: bool, n_tasks: int, render_hud: bool) -> Scenario:
+        super().__init__('health_gathering', base_dir, algorithm, sub_task, trained_task, window_visible, n_tasks, render_hud)
 
     @property
     def statistics_fields(self) -> []:
@@ -190,8 +190,8 @@ class SeekAndKill(Scenario):
         RESIZED_ENEMIES = auto()
 
     def __init__(self, base_dir: str, algorithm: Algorithm, sub_task: SubTask, trained_task: SubTask,
-                 window_visible: bool, n_tasks: int) -> Scenario:
-        super().__init__('seek_and_kill', base_dir, algorithm, sub_task, trained_task, window_visible, n_tasks)
+                 window_visible: bool, n_tasks: int, render_hud: bool) -> Scenario:
+        super().__init__('seek_and_kill', base_dir, algorithm, sub_task, trained_task, window_visible, n_tasks, render_hud)
         self.max_velocity = -np.inf
 
     @property
@@ -246,8 +246,8 @@ class DodgeProjectiles(Scenario):
         ARACHNOTRON = auto()
 
     def __init__(self, base_dir: str, algorithm: Algorithm, sub_task: SubTask, trained_task: SubTask,
-                 window_visible: bool, n_tasks: int) -> Scenario:
-        super().__init__('dodge_projectiles', base_dir, algorithm, sub_task, trained_task, window_visible, n_tasks)
+                 window_visible: bool, n_tasks: int, render_hud: bool) -> Scenario:
+        super().__init__('dodge_projectiles', base_dir, algorithm, sub_task, trained_task, window_visible, n_tasks, render_hud)
 
     def shape_reward(self, reward: float, game_variables: deque) -> float:
         if len(game_variables) < 2:

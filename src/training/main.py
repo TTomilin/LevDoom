@@ -28,6 +28,7 @@ if __name__ == "__main__":
     append_statistics = False
     decay_epsilon = True
     window_visible = False
+    render_hud = True
     train = True
 
     # Config
@@ -81,14 +82,14 @@ if __name__ == "__main__":
     trained_task = None
 
     # Create scenario(s)
-    scenarios = [DefendTheCenter(base_dir, algorithm, task, trained_task, window_visible, len(current_tasks)) for task in current_tasks]
-    # scenarios = [HealthGathering(base_dir, algorithm, task, trained_task, window_visible, len(current_tasks)) for task in current_tasks]
-    # scenarios = [SeekAndKill(base_dir, algorithm, task, trained_task, window_visible, len(current_tasks)) for task in current_tasks]
-    # scenarios = [DodgeProjectiles(base_dir, algorithm, task, trained_task, window_visible, len(current_tasks)) for task in current_tasks]
+    scenarios = [DefendTheCenter(base_dir, algorithm, task, trained_task, window_visible, len(current_tasks), render_hud) for task in current_tasks]
+    # scenarios = [HealthGathering(base_dir, algorithm, task, trained_task, window_visible, len(current_tasks), render_hud) for task in current_tasks]
+    # scenarios = [SeekAndKill(base_dir, algorithm, task, trained_task, window_visible, len(current_tasks), render_hud) for task in current_tasks]
+    # scenarios = [DodgeProjectiles(base_dir, algorithm, task, trained_task, window_visible, len(current_tasks), render_hud) for task in current_tasks]
 
     # Define the dimensions
-    img_rows, img_cols = 64, 64
-    # img_rows, img_cols = 84, 84
+    # img_rows, img_cols = 64, 64
+    img_rows, img_cols = 84, 84
     default_scenario = scenarios[0]
     action_size = default_scenario.game.get_available_buttons_size()
     state_size = get_input_shape(algorithm, img_rows, img_cols)

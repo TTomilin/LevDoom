@@ -94,9 +94,9 @@ class ExperienceReplay:
         # Increase the PER_b each time a new minibatch is sampled
         self.PER_b = np.min([1., self.PER_b + self.PER_b_increment])  # max = 1
 
-        # Calculate the max_weight
+        # Calculate the max_weight. Set it to a small value to avoid division by zero
         p_min = np.min(self.buffer.tree[-self.buffer.capacity:]) / self.buffer.total_priority
-        max_weight = 0 if p_min == 0 else (p_min * batch_size) ** (-self.PER_b)
+        max_weight = 1e-7 if p_min == 0 else (p_min * batch_size) ** (-self.PER_b)
 
         for i in range(batch_size):
             """

@@ -26,18 +26,24 @@ class Scenario:
                  trained_task: SubTask,
                  window_visible: bool,
                  n_tasks: int,
-                 render_hud = True,
+                 render_hud: bool,
+                 name_addition: str,
                  sound_enabled = False,
                  len_vars_history = 5,
                  screen_resolution = ScreenResolution.RES_640X480
                  ):
+        self.len_vars_history = len_vars_history
+
+        # Naming
         self.name = name
         self.base_dir = base_dir
-        self.n_tasks = n_tasks
-        self.trained_task = trained_task.name.lower() if trained_task else None
-        self.task = sub_task.name.lower()
+        self.name_addition = name_addition
         self.alg_name = algorithm.name.lower()
-        self.len_vars_history = len_vars_history
+
+        # Tasks
+        self.n_tasks = n_tasks
+        self.task = sub_task.name.lower()
+        self.trained_task = trained_task.name.lower() if trained_task else None
 
         # VizDoom
         self.game = DoomGame()
@@ -62,7 +68,7 @@ class Scenario:
             sub_folder = f'train/{self.task}'
         # sub_folder = f'test/{self.task}/{self.trained_task}' if self.trained_task \
         #     else f'multi/{self.task}' if self.multi_train else f'train/{self.task}'
-        return f'{self.base_dir}statistics/{self.name}/{sub_folder}.json'
+        return f'{self.base_dir}statistics/{self.name}/{sub_folder}{self.name_addition}.json'
 
     @property
     def config_path(self) -> str:
@@ -117,8 +123,9 @@ class DefendTheCenter(Scenario):
         RESIZED_ENEMIES = auto()
 
     def __init__(self, base_dir: str, algorithm: Algorithm, sub_task: SubTask, trained_task: SubTask,
-                 window_visible: bool, n_tasks: int, render_hud: bool) -> Scenario:
-        super().__init__('defend_the_center', base_dir, algorithm, sub_task, trained_task, window_visible, n_tasks, render_hud)
+                 window_visible: bool, n_tasks: int, render_hud: bool, name_addition: str) -> Scenario:
+        super().__init__('defend_the_center', base_dir, algorithm, sub_task, trained_task, window_visible, n_tasks,
+                         render_hud, name_addition)
 
     @property
     def statistics_fields(self) -> []:
@@ -142,6 +149,7 @@ class DefendTheCenter(Scenario):
                 'ammo_left': game_vars[-1][DTCGameVariable.AMMO2.value]}
 
     def get_measurements(self, game_vars: Array, **kwargs) -> np.ndarray:
+        # TODO Determine suitable measurements for DFP
         pass
 
 
@@ -164,8 +172,9 @@ class HealthGathering(Scenario):
         STIMPACKS_POISON = auto()
 
     def __init__(self, base_dir: str, algorithm: Algorithm, sub_task: SubTask, trained_task: SubTask,
-                 window_visible: bool, n_tasks: int, render_hud: bool) -> Scenario:
-        super().__init__('health_gathering', base_dir, algorithm, sub_task, trained_task, window_visible, n_tasks, render_hud)
+                 window_visible: bool, n_tasks: int, render_hud: bool, name_addition: str) -> Scenario:
+        super().__init__('health_gathering', base_dir, algorithm, sub_task, trained_task, window_visible, n_tasks,
+                         render_hud, name_addition)
 
     @property
     def statistics_fields(self) -> []:
@@ -190,8 +199,9 @@ class SeekAndKill(Scenario):
         RESIZED_ENEMIES = auto()
 
     def __init__(self, base_dir: str, algorithm: Algorithm, sub_task: SubTask, trained_task: SubTask,
-                 window_visible: bool, n_tasks: int, render_hud: bool) -> Scenario:
-        super().__init__('seek_and_kill', base_dir, algorithm, sub_task, trained_task, window_visible, n_tasks, render_hud)
+                 window_visible: bool, n_tasks: int, render_hud: bool, name_addition: str) -> Scenario:
+        super().__init__('seek_and_kill', base_dir, algorithm, sub_task, trained_task, window_visible, n_tasks,
+                         render_hud, name_addition)
         self.max_velocity = -np.inf
 
     @property
@@ -224,6 +234,10 @@ class SeekAndKill(Scenario):
     def additional_stats(self, game_vars) -> {}:
         return {'kill_count': game_vars[-1][SKGameVariable.KILL_COUNT.value]}
 
+    def get_measurements(self, game_vars: Array, **kwargs) -> np.ndarray:
+        # TODO Determine suitable measurements for DFP
+        pass
+
 
 class SKGameVariable(Enum):
     KILL_COUNT = 0
@@ -246,8 +260,9 @@ class DodgeProjectiles(Scenario):
         ARACHNOTRON = auto()
 
     def __init__(self, base_dir: str, algorithm: Algorithm, sub_task: SubTask, trained_task: SubTask,
-                 window_visible: bool, n_tasks: int, render_hud: bool) -> Scenario:
-        super().__init__('dodge_projectiles', base_dir, algorithm, sub_task, trained_task, window_visible, n_tasks, render_hud)
+                 window_visible: bool, n_tasks: int, render_hud: bool, name_addition: str) -> Scenario:
+        super().__init__('dodge_projectiles', base_dir, algorithm, sub_task, trained_task, window_visible, n_tasks,
+                         render_hud, name_addition)
 
     def shape_reward(self, reward: float, game_variables: deque) -> float:
         if len(game_variables) < 2:
@@ -258,6 +273,10 @@ class DodgeProjectiles(Scenario):
         if current_vars[DPGameVariable.HEALTH.value] < previous_vars[DPGameVariable.HEALTH.value]:
             reward -= 1  # Loss of HEALTH
         return reward
+
+    def get_measurements(self, game_vars: Array, **kwargs) -> np.ndarray:
+        # TODO Determine suitable measurements for DFP
+        pass
 
 
 class DPGameVariable(Enum):

@@ -44,6 +44,7 @@ if __name__ == "__main__":
 
     # Paths
     base_dir = '../../'
+    model_name_addition = '_magic'
 
     # Specify model
     # algorithm = Algorithm.DFP
@@ -83,10 +84,10 @@ if __name__ == "__main__":
     trained_task = None
 
     # Create scenario(s)
-    scenarios = [DefendTheCenter(base_dir, algorithm, task, trained_task, window_visible, len(current_tasks), render_hud) for task in current_tasks]
-    # scenarios = [HealthGathering(base_dir, algorithm, task, trained_task, window_visible, len(current_tasks), render_hud) for task in current_tasks]
-    # scenarios = [SeekAndKill(base_dir, algorithm, task, trained_task, window_visible, len(current_tasks), render_hud) for task in current_tasks]
-    # scenarios = [DodgeProjectiles(base_dir, algorithm, task, trained_task, window_visible, len(current_tasks), render_hud) for task in current_tasks]
+    scenarios = [DefendTheCenter(base_dir, algorithm, task, trained_task, window_visible, len(current_tasks), render_hud, model_name_addition) for task in current_tasks]
+    # scenarios = [HealthGathering(base_dir, algorithm, task, trained_task, window_visible, len(current_tasks), render_hud, model_name_addition) for task in current_tasks]
+    # scenarios = [SeekAndKill(base_dir, algorithm, task, trained_task, window_visible, len(current_tasks), render_hud, model_name_addition) for task in current_tasks]
+    # scenarios = [DodgeProjectiles(base_dir, algorithm, task, trained_task, window_visible, len(current_tasks), render_hud, model_name_addition) for task in current_tasks]
 
     # Define the dimensions
     # img_rows, img_cols = 64, 64
@@ -119,7 +120,7 @@ if __name__ == "__main__":
         0].name.lower() if train else trained_task.name.lower()
     alg_name = algorithm.name.lower()
 
-    model_path = f'{base_dir}models/{alg_name}/{default_scenario.name}/{task_name}_v*.h5'
+    model_path = f'{base_dir}models/{alg_name}/{default_scenario.name}/{task_name}{model_name_addition}_v*.h5'
     model_version = ModelVersion(next_model_version(model_path))
 
     # Load Model

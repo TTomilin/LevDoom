@@ -7,7 +7,7 @@ from threading import Thread, Lock
 from agent import DFPAgent, DuelingDDQNAgent, DRQNAgent
 from doom import Doom
 from memory import ExperienceReplay
-from model import Algorithm, dueling_dqn, drqn, value_distribution_network, dfp_network, ModelVersion
+from model import Algorithm, dueling_dqn, dueling_drqn, drqn, value_distribution_network, dfp_network, ModelVersion
 from scenario import HealthGathering, SeekAndKill, DefendTheCenter, DodgeProjectiles
 from trainer import AsynchronousTrainer
 from utils import get_input_shape, next_model_version, latest_model_path
@@ -47,7 +47,8 @@ if __name__ == "__main__":
 
     # Specify model
     # algorithm = Algorithm.DFP
-    algorithm = Algorithm.DUELING_DDQN
+    # algorithm = Algorithm.DUELING_DDQN
+    algorithm = Algorithm.DUELING_DDRQN
     # algorithm = Algorithm.C51_DDQN
     # algorithm = Algorithm.DRQN
 
@@ -101,6 +102,9 @@ if __name__ == "__main__":
     elif algorithm == Algorithm.DUELING_DDQN:
         model = dueling_dqn(state_size, action_size, learning_rate)
         target_model = dueling_dqn(state_size, action_size, learning_rate)
+    elif algorithm == Algorithm.DUELING_DDRQN:
+        model = dueling_drqn(state_size, action_size, learning_rate)
+        target_model = dueling_drqn(state_size, action_size, learning_rate)
     elif algorithm == Algorithm.C51_DDQN:
         model = value_distribution_network(state_size, action_size, learning_rate)
         target_model = value_distribution_network(state_size, action_size, learning_rate)

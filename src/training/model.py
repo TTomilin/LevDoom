@@ -1,4 +1,5 @@
 from enum import Enum, auto
+from typing import Tuple
 
 from keras.layers import BatchNormalization, Activation, Masking, Embedding, RepeatVector
 from tensorflow.keras import backend as K
@@ -24,17 +25,17 @@ class Algorithm(Enum):
     DUELING_DDQN = auto()
 
 
-def build_base_cnn(input_shape):
-    state_input = Input(shape = input_shape)
-    x = Conv2D(32, (8, 8), strides = (4, 4), activation = 'elu', kernel_initializer = he_uniform())(state_input)
+def build_base_cnn(input_shape: Tuple[int]) -> Tuple:
+    input_layer = Input(shape = input_shape)
+    x = Conv2D(32, (8, 8), strides = (4, 4), activation = 'elu', kernel_initializer = he_uniform())(input_layer)
     x = Conv2D(64, (4, 4), strides = (2, 2), activation = 'elu', kernel_initializer = he_uniform())(x)
     x = Conv2D(64, (3, 3), strides = (1, 1), activation = 'elu', kernel_initializer = he_uniform())(x)
     x = Flatten()(x)
-    return state_input, x
+    return input_layer, x
 
 
 # Model from https://flyyufelix.github.io/2017/10/12/dqn-vs-pg.html
-def dueling_dqn(input_shape: [], action_size: int, learning_rate = 0.0001) -> Model:
+def dueling_dqn(input_shape: Tuple[int], action_size: int, learning_rate: float) -> Model:
     state_input, x = build_base_cnn(input_shape)
 
     # State value tower - V
@@ -57,39 +58,37 @@ def dueling_dqn(input_shape: [], action_size: int, learning_rate = 0.0001) -> Mo
 
 
 # Model from https://github.com/itaicaspi/keras-dqn-doom/blob/master/main.py
-def dueling_drqn(input_shape: [], action_size: int, learning_rate = 0.0001) -> Model:
+def dueling_drqn(input_shape: Tuple[int], action_size: int, learning_rate: float) -> Model:
     max_action_sequence_length = 5
     input_action_space_size = action_size + 2
     end_token = action_size + 1
-    history_length = 4
-    state_height, state_width = 64, 64
 
-    state_model_input = Input(shape = (history_length, state_height, state_width))
-    state_model = Conv2D(16, (3, 3), stride = (2, 2), activation = 'elu', input_shape = (history_length, state_height, state_width), init = 'uniform', trainable = True)(state_model_input)
-    state_model = Conv2D(32, (3, 3), stride = (2, 2), activation = 'elu', init = 'uniform', trainable = True)(state_model)
-    state_model = Conv2D(64, (3, 3), stride = (2, 2), activation = 'elu', init = 'uniform', trainable = True)(state_model)
-    state_model = Conv2D(128, (3, 3), stride = (1, 1), activation = 'elu', init = 'uniform')(state_model)
-    state_model = Conv2D(256, (3, 3), stride = (1, 1), activation = 'elu', init = 'uniform')(state_model)
+    state_model_input = Input(shape = input_shape)
+    state_model = Conv2D(16, (3, 3), stride = (2, 2), activation = 'elu', input_shape = input_shape, init = he_uniform(), trainable = True)(state_model_input)
+    state_model = Conv2D(32, (3, 3), stride = (2, 2), activation = 'elu', init = he_uniform(), trainable = True)(state_model)
+    state_model = Conv2D(64, (3, 3), stride = (2, 2), activation = 'elu', init = he_uniform(), trainable = True)(state_model)
+    state_model = Conv2D(128, (3, 3), stride = (1, 1), activation = 'elu', init = he_uniform())(state_model)
+    state_model = Conv2D(256, (3, 3), stride = (1, 1), activation = 'elu', init = he_uniform())(state_model)
     state_model = Flatten()(state_model)
-    state_model = Dense(512, activation = 'elu', init = 'uniform')(state_model)
+    state_model = Dense(512, activation = 'elu', init = he_uniform())(state_model)
     state_model = RepeatVector(max_action_sequence_length)(state_model)
 
     action_model_input = Input(shape = (max_action_sequence_length,))
     action_model = Masking(mask_value = end_token, input_shape = (max_action_sequence_length,))(action_model_input)
-    action_model = Embedding(input_dim = input_action_space_size, output_dim = 100, init = 'uniform', input_length = max_action_sequence_length)(action_model)
-    action_model = TimeDistributed(Dense(100, init = 'uniform', activation = 'elu'))(action_model)
+    action_model = Embedding(input_dim = input_action_space_size, output_dim = 100, init = he_uniform(), input_length = max_action_sequence_length)(action_model)
+    action_model = TimeDistributed(Dense(100, init = he_uniform(), activation = 'elu'))(action_model)
 
     x = concatenate([state_model, action_model], concat_axis = -1)
-    x = LSTM(512, return_sequences = True, activation = 'elu', init = 'uniform')(x)
+    x = LSTM(512, return_sequences = True, activation = 'elu', init = he_uniform())(x)
 
     # state value tower - V
-    state_value = TimeDistributed(Dense(256, activation = 'elu', init = 'uniform'))(x)
-    state_value = TimeDistributed(Dense(1, init = 'uniform'))(state_value)
+    state_value = TimeDistributed(Dense(256, activation = 'elu', init = he_uniform()))(x)
+    state_value = TimeDistributed(Dense(1, init = he_uniform()))(state_value)
     state_value = Lambda(lambda s: K.repeat_elements(s, rep = action_size, axis = 2))(state_value)
 
     # Action advantage tower - A
-    action_advantage = TimeDistributed(Dense(256, activation = 'elu', init = 'uniform'))(x)
-    action_advantage = TimeDistributed(Dense(action_size, init = 'uniform'))(action_advantage)
+    action_advantage = TimeDistributed(Dense(256, activation = 'elu', init = he_uniform()))(x)
+    action_advantage = TimeDistributed(Dense(action_size, init = he_uniform()))(action_advantage)
     action_advantage = TimeDistributed(Lambda(lambda a: a - K.mean(a, keepdims = True, axis = -1)))(action_advantage)
 
     # Merge to state-action value function Q
@@ -102,7 +101,7 @@ def dueling_drqn(input_shape: [], action_size: int, learning_rate = 0.0001) -> M
 
 
 # Model from https://flyyufelix.github.io/2017/10/12/dqn-vs-pg.html
-def value_distribution_network(input_shape: [], action_size: int, learning_rate = 0.0001, num_atoms = 51):
+def value_distribution_network(input_shape: Tuple[int], action_size: int, learning_rate: float, num_atoms = 51) -> Model:
     """Model Value Distribution
     With States as inputs and output Probability Distributions for all Actions
     """
@@ -119,7 +118,7 @@ def value_distribution_network(input_shape: [], action_size: int, learning_rate 
 
 
 # Model from https://flyyufelix.github.io/2017/10/12/dqn-vs-pg.html
-def drqn(input_shape: [], action_size: int, learning_rate = 0.0001) -> Model:
+def drqn(input_shape: Tuple[int], action_size: int, learning_rate: float) -> Model:
     model = Sequential()
     model.add(TimeDistributed(Conv2D(32, (8, 8), strides = (4, 4), activation = 'elu'), input_shape = input_shape))
     model.add(TimeDistributed(Conv2D(64, (4, 4), strides = (2, 2), activation = 'elu')))
@@ -132,9 +131,9 @@ def drqn(input_shape: [], action_size: int, learning_rate = 0.0001) -> Model:
 
 
 # Model from https://flyyufelix.github.io/2017/10/12/dqn-vs-pg.html
-def reinforce(input_shape: [], action_size: int, learning_rate = 0.0001) -> Model:
+def reinforce(input_shape: Tuple[int], action_size: int, learning_rate: float) -> Model:
     model = Sequential()
-    model.add(Conv2D(32, 8, 8, strides = (4, 4), input_shape = (input_shape)))
+    model.add(Conv2D(32, 8, 8, strides = (4, 4), input_shape = input_shape))
     model.add(BatchNormalization())
     model.add(Activation('relu'))
     model.add(Conv2D(64, 4, 4, strides = (2, 2)))
@@ -156,7 +155,7 @@ def reinforce(input_shape: [], action_size: int, learning_rate = 0.0001) -> Mode
 
 
 # Model from https://github.com/flyyufelix/Direct-Future-Prediction-Keras
-def dfp_network(input_shape, action_size, learning_rate, measurement_size = 3, num_timesteps = 6):
+def dfp_network(input_shape: Tuple[int], action_size: int, learning_rate: float, measurement_size = 3, n_timesteps = 6) -> Model:
     """
     Neural Network for Direct Future Prediction (DFP)
     """
@@ -172,7 +171,7 @@ def dfp_network(input_shape, action_size, learning_rate, measurement_size = 3, n
     measurement_feat = Dense(128, activation = 'elu')(measurement_feat)
 
     # Goal Feature
-    goal_size = measurement_size * num_timesteps
+    goal_size = measurement_size * n_timesteps
     goal_input = Input(shape = (goal_size,))
     goal_feat = Dense(128, activation = 'elu')(goal_input)
     goal_feat = Dense(128, activation = 'elu')(goal_feat)
@@ -180,7 +179,7 @@ def dfp_network(input_shape, action_size, learning_rate, measurement_size = 3, n
 
     concat_feat = concatenate([perception_feat, measurement_feat, goal_feat])
 
-    measurement_pred_size = measurement_size * num_timesteps  # 3 measurements, 6 timesteps
+    measurement_pred_size = measurement_size * n_timesteps  # 3 measurements, 6 timesteps
 
     expectation_stream = Dense(measurement_pred_size, activation = 'elu')(concat_feat)
 

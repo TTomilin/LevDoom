@@ -12,10 +12,8 @@ def get_input_shape(algorithm: Algorithm, img_rows, img_cols) -> tuple:
     trace_length = 4  # Temporal Dimension
     if algorithm == Algorithm.DRQN:
         return trace_length, img_rows, img_cols, img_channels  # 4x64x64x3
-    elif algorithm == Algorithm.C51_DDQN or algorithm == Algorithm.DFP or algorithm == Algorithm.DUELING_DDQN:
+    else:
         return img_rows, img_cols, trace_length  # 64x64x4
-    elif algorithm == Algorithm.DUELING_DDRQN:
-        return trace_length, img_rows, img_cols  # 4x64x64
 
 
 def next_model_version(path):

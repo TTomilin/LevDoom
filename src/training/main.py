@@ -44,7 +44,7 @@ if __name__ == "__main__":
 
     # Paths
     base_dir = '../../'
-    model_name_addition = '_magic'
+    model_name_addition = ''
 
     # Specify model
     # algorithm = Algorithm.DFP

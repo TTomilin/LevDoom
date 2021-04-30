@@ -347,18 +347,13 @@ class DuelingDDQNAgent(Agent):
             terminal = 0 if done[i] else 1
 
             # Value of the best actions for the next state according to the target network
-            best_action_value = np.max(target_val[i])
+            # a'_max = argmax_a' Q(s', a')
+            # Q_max = Q_target(s', a'_max)
+            best_action = np.argmax(target_next[i])
+            best_action_value = target_val[i][best_action]
+            # best_action_value = np.max(target_val[i])
 
             target[i][actions[i]] = rewards[i] + terminal * self.gamma * best_action_value
-
-            continue
-            # TODO try the version below
-            # current Q Network selects the action
-            # a'_max = argmax_a' Q(s', a')
-            a = np.argmax(target_next[i])
-            # target Q Network evaluates the action
-            # Q_max = Q_target(s', a'_max)
-            target[i][actions[i]] = rewards[i] + terminal * self.gamma * (target_val[i][a])
 
         with self.lock:
             loss = self.model.train_on_batch(states, target)

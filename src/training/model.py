@@ -1,13 +1,13 @@
 from enum import Enum, auto
-from typing import Tuple
 
-from keras.layers import BatchNormalization, Activation, Masking, Embedding, RepeatVector
 from tensorflow.keras import backend as K
+from tensorflow.keras.initializers import he_uniform
+from tensorflow.keras.layers import BatchNormalization, Activation, Masking, Embedding, RepeatVector
 from tensorflow.keras.layers import Flatten, Input, Dense, Conv2D, Lambda, TimeDistributed, LSTM, add, concatenate
 from tensorflow.keras.losses import Huber, categorical_crossentropy
 from tensorflow.keras.models import Model, Sequential
 from tensorflow.keras.optimizers import Adam
-from tensorflow.keras.initializers import he_uniform
+from typing import Tuple
 
 
 class ModelVersion:
@@ -23,6 +23,7 @@ class Algorithm(Enum):
     C51_DDQN = auto()
     REINFORCE = auto()
     DUELING_DDQN = auto()
+    DUELING_DDRQN = auto()
 
 
 def build_base_cnn(input_shape: Tuple[int]) -> Tuple:
@@ -64,37 +65,38 @@ def dueling_drqn(input_shape: Tuple[int], action_size: int, learning_rate: float
     end_token = action_size + 1
 
     state_model_input = Input(shape = input_shape)
-    state_model = Conv2D(16, (3, 3), stride = (2, 2), activation = 'elu', input_shape = input_shape, init = he_uniform(), trainable = True)(state_model_input)
-    state_model = Conv2D(32, (3, 3), stride = (2, 2), activation = 'elu', init = he_uniform(), trainable = True)(state_model)
-    state_model = Conv2D(64, (3, 3), stride = (2, 2), activation = 'elu', init = he_uniform(), trainable = True)(state_model)
-    state_model = Conv2D(128, (3, 3), stride = (1, 1), activation = 'elu', init = he_uniform())(state_model)
-    state_model = Conv2D(256, (3, 3), stride = (1, 1), activation = 'elu', init = he_uniform())(state_model)
+    state_model = Conv2D(16, (3, 3), strides = (2, 2), activation = 'elu', input_shape = input_shape, kernel_initializer = he_uniform(), trainable = True)(state_model_input)
+    state_model = Conv2D(32, (3, 3), strides = (2, 2), activation = 'elu', kernel_initializer = he_uniform(), trainable = True)(state_model)
+    state_model = Conv2D(64, (3, 3), strides = (2, 2), activation = 'elu', kernel_initializer = he_uniform(), trainable = True)(state_model)
+    state_model = Conv2D(128, (3, 3), strides = (1, 1), activation = 'elu', kernel_initializer = he_uniform())(state_model)
+    state_model = Conv2D(256, (3, 3), strides = (1, 1), activation = 'elu', kernel_initializer = he_uniform())(state_model)
     state_model = Flatten()(state_model)
-    state_model = Dense(512, activation = 'elu', init = he_uniform())(state_model)
+    state_model = Dense(512, activation = 'elu', kernel_initializer = he_uniform())(state_model)
     state_model = RepeatVector(max_action_sequence_length)(state_model)
 
     action_model_input = Input(shape = (max_action_sequence_length,))
     action_model = Masking(mask_value = end_token, input_shape = (max_action_sequence_length,))(action_model_input)
-    action_model = Embedding(input_dim = input_action_space_size, output_dim = 100, init = he_uniform(), input_length = max_action_sequence_length)(action_model)
-    action_model = TimeDistributed(Dense(100, init = he_uniform(), activation = 'elu'))(action_model)
+    action_model = Embedding(input_dim = input_action_space_size, output_dim = 100, embeddings_initializer = he_uniform(), input_length = max_action_sequence_length)(action_model)
+    action_model = TimeDistributed(Dense(100, kernel_initializer = he_uniform(), activation = 'elu'))(action_model)
 
-    x = concatenate([state_model, action_model], concat_axis = -1)
-    x = LSTM(512, return_sequences = True, activation = 'elu', init = he_uniform())(x)
+    # x = concatenate([state_model, action_model], concat_axis = -1)
+    x = concatenate([state_model, action_model], axis = -1)
+    x = LSTM(512, return_sequences = True, activation = 'elu', kernel_initializer = he_uniform())(x)
 
     # state value tower - V
-    state_value = TimeDistributed(Dense(256, activation = 'elu', init = he_uniform()))(x)
-    state_value = TimeDistributed(Dense(1, init = he_uniform()))(state_value)
+    state_value = TimeDistributed(Dense(256, activation = 'elu', kernel_initializer = he_uniform()))(x)
+    state_value = TimeDistributed(Dense(1, kernel_initializer = he_uniform()))(state_value)
     state_value = Lambda(lambda s: K.repeat_elements(s, rep = action_size, axis = 2))(state_value)
 
     # Action advantage tower - A
-    action_advantage = TimeDistributed(Dense(256, activation = 'elu', init = he_uniform()))(x)
-    action_advantage = TimeDistributed(Dense(action_size, init = he_uniform()))(action_advantage)
+    action_advantage = TimeDistributed(Dense(256, activation = 'elu', kernel_initializer = he_uniform()))(x)
+    action_advantage = TimeDistributed(Dense(action_size, kernel_initializer = he_uniform()))(action_advantage)
     action_advantage = TimeDistributed(Lambda(lambda a: a - K.mean(a, keepdims = True, axis = -1)))(action_advantage)
 
     # Merge to state-action value function Q
     state_action_value = add([state_value, action_advantage])
 
-    model = Model(input = [state_model_input, action_model_input], output = state_action_value)
+    model = Model(inputs = [state_model_input, action_model_input], outputs = state_action_value)
     model.compile(Adam(lr = learning_rate), Huber())
     model.summary()
     return model

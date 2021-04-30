@@ -134,9 +134,8 @@ class Agent:
         """
         path = self.latest_model_path()
         print(f"Loading model {path.split('/')[-1]}...")
-        with self.lock:
-            self.model.load_weights(path)
-            self.update_target_model()
+        self.model.load_weights(path)
+        self.update_target_model()
 
     def save_model(self) -> None:
         """
@@ -149,11 +148,10 @@ class Agent:
         if self.local_model_version.version < self.model_version.version:
             self.local_model_version.version = self.model_version.version
             return
-        with self.lock:  # Prevent other threads from using the model
-            self.model_version.version = next_model_version(self.model_path)
-            path = self.next_model_path()
-            print(f"Saving model {path.split('/')[-1]}...")
-            self.model.save_weights(path)
+        self.model_version.version = next_model_version(self.model_path)
+        path = self.next_model_path()
+        print(f"Saving model {path.split('/')[-1]}...")
+        self.model.save_weights(path)
 
     def latest_model_path(self) -> str:
         return self.model_path.replace('*', str(self.model_version.version - 1))
@@ -199,12 +197,11 @@ class DRQNAgent(Agent):
         """
         if np.random.rand() <= self.epsilon or self.memory.buffer_size < self.trace_length:
             return random.randrange(self.action_size)
-        with self.lock:
-            last_traces = list(itertools.islice(self.memory.buffer, 0, self.trace_length))
-            last_traces.reverse()
-            last_traces = np.array([trace[3] for trace in last_traces])  # Take the next state of every trace
-            last_traces = np.expand_dims(last_traces, axis = 0)  # 1x4x64x64x3
-            q_values = self.target_model.predict(last_traces)
+        last_traces = list(itertools.islice(self.memory.buffer, 0, self.trace_length))
+        last_traces.reverse()
+        last_traces = np.array([trace[3] for trace in last_traces])  # Take the next state of every trace
+        last_traces = np.expand_dims(last_traces, axis = 0)  # 1x4x64x64x3
+        q_values = self.target_model.predict(last_traces)
         return np.argmax(q_values)
 
     def train(self) -> None:
@@ -215,28 +212,41 @@ class DRQNAgent(Agent):
 
         sample_traces = self.memory.sample(self.batch_size, self.trace_length)
 
-        update_input = np.zeros(((self.batch_size,) + self.state_size))
-        update_target = np.zeros(((self.batch_size,) + self.state_size))
+        states = np.zeros(((self.batch_size,) + self.state_size))
+        states_next = np.zeros(((self.batch_size,) + self.state_size))
 
-        action = np.zeros((self.batch_size, self.trace_length))
-        reward = np.zeros((self.batch_size, self.trace_length))
+        actions = np.zeros((self.batch_size, self.trace_length))
+        rewards = np.zeros((self.batch_size, self.trace_length))
 
         for i in range(self.batch_size):
             for j in range(self.trace_length):
-                update_input[i, j, :, :, :] = sample_traces[i][j][0]
-                action[i, j] = sample_traces[i][j][1]
-                reward[i, j] = sample_traces[i][j][2]
-                update_target[i, j, :, :, :] = sample_traces[i][j][3]
+                states[i, j, :, :, :] = sample_traces[i][j][0]
+                actions[i, j] = sample_traces[i][j][1]
+                rewards[i, j] = sample_traces[i][j][2]
+                states_next[i, j, :, :, :] = sample_traces[i][j][3]
 
-        target = self.model.predict(update_input)
-        target_val = self.model.predict(update_target)
+        # Predict Q-values for starting state using the main network
+        target = self.model.predict(states)
+
+        # Predict best action in ending state using the main network
+        target_next = self.model.predict(states_next)
+
+        # Predict Q-values for ending state using the target network
+        target_val = self.target_model.predict(states_next)
 
         for i in range(self.batch_size):
-            a = np.argmax(target_val[i])
-            target[i][int(action[i][-1])] = reward[i][-1] + self.gamma * (target_val[i][a])
+            # a = np.argmax(target_val[i])
+            # target[i][int(action[i][-1])] = reward[i][-1] + self.gamma * (target_val[i][a])
+
+            # Current Q-Network selects the action
+            # a'_max = argmax_a' Q(s', a')
+            a = np.argmax(target_next[i])
+            # target Q Network evaluates the action
+            # Q_max = Q_target(s', a'_max)
+            target[i][int(actions[i][-1])] = rewards[i][-1] + self.gamma * (target_val[i][a])
 
         with self.lock:
-            loss = self.model.train_on_batch(update_input, target)
+            loss = self.model.train_on_batch(states, target)
 
         # Update the target model to be same with model
         if self.time_step % self.update_target_freq == 0:
@@ -293,11 +303,7 @@ class DuelingDDQNAgent(Agent):
         :param state: the current observable state that the agent is in
         :return: index of the action with the highest Q-value
         """
-        if np.random.rand() <= self.epsilon:
-            return random.randrange(self.action_size)
-        with self.lock:
-            q_values = self.target_model.predict(state)
-        return np.argmax(q_values)
+        return random.randrange(self.action_size) if np.random.rand() <= self.epsilon else np.argmax(self.target_model.predict(state))
 
     def train(self) -> None:
         """
@@ -355,8 +361,6 @@ class DuelingDDQNAgent(Agent):
             target[i][actions[i]] = rewards[i] + terminal * self.gamma * (target_val[i][a])
 
         with self.lock:
-            # TODO try with sample weights
-            # loss = self.model.train_on_batch(states, target, sample_weight = np.squeeze(ISWeights_mb))
             loss = self.model.train_on_batch(states, target)
 
         if self.memory.prioritized:

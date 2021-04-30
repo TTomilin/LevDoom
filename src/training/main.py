@@ -1,11 +1,10 @@
 #!/usr/bin/env python
 from __future__ import print_function
 
-import numpy as np
 import tensorflow as tf
 from threading import Thread, Lock
 
-from agent import DFPAgent, DuelingDDQNAgent
+from agent import DFPAgent, DuelingDDQNAgent, DRQNAgent
 from doom import Doom
 from memory import ExperienceReplay
 from model import Algorithm, dueling_dqn, drqn, value_distribution_network, dfp_network, ModelVersion
@@ -36,7 +35,7 @@ if __name__ == "__main__":
     max_epochs = 3000
     learning_rate = 0.0001
     memory_storage_size = 5000
-    memory_replay_capacity = 20000
+    memory_replay_capacity = 50000
 
     # Frequencies
     stats_save_freq = 5000
@@ -53,6 +52,7 @@ if __name__ == "__main__":
     # algorithm = Algorithm.DRQN
 
     # Specify task(s)
+
     # current_tasks = [task for task in DefendTheCenter.SubTask]
     # current_tasks.remove(DefendTheCenter.SubTask.STONE_WALL)
     # current_tasks.remove(DefendTheCenter.SubTask.FLYING_ENEMIES)
@@ -69,8 +69,7 @@ if __name__ == "__main__":
     # current_tasks.remove(SeekAndKill.SubTask.INVULNERABLE)
     # current_tasks.remove(SeekAndKill.SubTask.RED)
     # current_tasks.remove(SeekAndKill.SubTask.MULTI)
-    # current_tasks = [DefendTheCenter.SubTask.DEFAULT, DefendTheCenter.SubTask.GORE, DefendTheCenter.SubTask.STONE_WALL]
-    # trained_task = DefendTheCenter.SubTask.DEFAULT
+
     # current_tasks = [SeekAndKill.SubTask.INVULNERABLE]
     # trained_task = SeekAndKill.SubTask.MULTI
     # current_tasks = [DodgeProjectiles.SubTask.MANCUBUS]
@@ -78,6 +77,7 @@ if __name__ == "__main__":
     # current_tasks = [HealthGathering.SubTask.SUPREME]
     # trained_task = HealthGathering.SubTask.SUPREME
 
+    # current_tasks = [HealthGathering.SubTask.STIMPACKS_POISON]
     current_tasks = [DefendTheCenter.SubTask.DEFAULT]
     trained_task = None
 
@@ -132,6 +132,7 @@ if __name__ == "__main__":
                               storage_size = memory_storage_size, capacity = memory_replay_capacity)
 
     # Create Agent
+    # agent = DRQNAgent(memory, (img_rows, img_cols), state_size, action_size, model_path, model_version,
     agent = DuelingDDQNAgent(memory, (img_rows, img_cols), state_size, action_size, model_path, model_version,
     # agent = DFPAgent(memory, (img_rows, img_cols), state_size, action_size, model_path, model_version,
                      [model, target_model], Lock(), observe)

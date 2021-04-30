@@ -72,8 +72,8 @@ class ExperienceReplay:
             if trace_length > 1:
                 points = random.sample(range(0, self.buffer_size - trace_length), batch_size)
                 batch = [list(itertools.islice(self.buffer, point, point + trace_length)) for point in points]
-                for trace in batch:
-                    trace.reverse()
+                # for trace in batch:
+                #     trace.reverse()
                 batch = np.array(batch)
             else:
                 batch = random.sample(self.buffer, batch_size)
@@ -81,32 +81,32 @@ class ExperienceReplay:
                     batch[i] = self.buffer[i]
             return batch
 
-        # Create a sample array that will contains the minibatch
+        # Create a sample array that will contain the mini-batch
         memory_b = []
 
         b_idx, b_ISWeights = np.empty((batch_size,), dtype = np.int32), np.empty((batch_size, 1), dtype = np.float32)
 
         # Calculate the priority segment
-        # Here, as explained in the paper, we divide the Range[0, ptotal] into n ranges
+
+        # Divide the Range[0, p_total] into n ranges
         priority_segment = self.buffer.total_priority / batch_size  # priority segment
 
         # Increase the PER_b each time a new minibatch is sampled
         self.PER_b = np.min([1., self.PER_b + self.PER_b_increment])  # max = 1
 
-        # Calculating the max_weight
+        # Calculate the max_weight
         p_min = np.min(self.buffer.tree[-self.buffer.capacity:]) / self.buffer.total_priority
-        max_weight = 1e-6 if p_min == 0 else (p_min * batch_size) ** (-self.PER_b)
-        # max_weight = 0 if p_min == 0 else (p_min * batch_size) ** (-self.PER_b)
+        max_weight = 0 if p_min == 0 else (p_min * batch_size) ** (-self.PER_b)
 
         for i in range(batch_size):
             """
-            A value is uniformly sampled from each range
+            Uniformly sample a value from each range
             """
             a, b = priority_segment * i, priority_segment * (i + 1)
             value = np.random.uniform(a, b)
 
             """
-            Experience that corresponds to each value is retrieved
+            Experience that corresponds to each value that is retrieved
             """
             index, priority, data = self.buffer.get_leaf(value)
 
@@ -122,11 +122,10 @@ class ExperienceReplay:
 
         return b_idx, memory_b, b_ISWeights
 
-    """
-    Update the priorities in the tree
-    """
-
-    def batch_update(self, tree_idx: np.ndarray, abs_errors):
+    def batch_update(self, tree_idx: np.ndarray, abs_errors: np.ndarray) -> None:
+        """
+        Update the priorities in the tree
+        """
         abs_errors += self.PER_e  # convert to abs and avoid 0
         clipped_errors = np.minimum(abs_errors, self.absolute_error_upper)
         ps = np.power(clipped_errors, self.PER_a)
@@ -165,6 +164,7 @@ class ExperienceReplay:
     @property
     def buffer_size(self):
         """
+        Retrieve the number of gathered experience
         :return: Current size of the buffer
         """
         return self.buffer.data_pointer if type(self.buffer) == SumTree else len(self.buffer)
@@ -172,15 +172,14 @@ class ExperienceReplay:
 
 class SumTree(object):
     """
-    This SumTree code is modified version of Morvan Zhou:
+    This SumTree is a modified version of the implementation by Morvan Zhou:
     https://github.com/MorvanZhou/Reinforcement-learning-with-tensorflow/blob/master/contents/5.2_Prioritized_Replay_DQN/RL_brain.py
     """
     data_pointer = 0
 
     """
-    Here we initialize the tree with all nodes = 0, and initialize the data with all values = 0
+    Initialize the nodes and data of the tree with zeros
     """
-
     def __init__(self, capacity):
         self.capacity = capacity  # Number of leaf nodes (final nodes) that contains experiences
 
@@ -199,7 +198,7 @@ class SumTree(object):
         0  0 0  0  [Size: capacity] it's at this line that there is the priorities score (aka pi)
         """
 
-        # Contains the experiences (so the size of data is capacity)
+        # Contains [capacity] experiences
         self.data = np.zeros(capacity, dtype = object)
 
     """
@@ -207,7 +206,7 @@ class SumTree(object):
     """
 
     def add(self, priority, data):
-        # Look at what index we want to put the experience
+        # Determine the index where the experience will be stored
         tree_index = self.data_pointer + self.capacity - 1
 
         """ tree:
@@ -218,29 +217,29 @@ class SumTree(object):
         tree_index  0 0  0  We fill the leaves from left to right
         """
 
-        # Update data frame
+        # Update the data frame
         self.data[self.data_pointer] = data
 
         # Update the leaf
         self.update(tree_index, priority)
 
-        # Add 1 to data_pointer
+        # Increment the data_pointer
         self.data_pointer += 1
 
-        if self.data_pointer >= self.capacity:  # If we're above the capacity, you go back to first index (we overwrite)
+        # Return to first index and start overwriting, if the capacity is breached
+        if self.data_pointer >= self.capacity:
             self.data_pointer = 0
 
     """
     Update the leaf priority score and propagate the change through tree
     """
-
-    def update(self, tree_index, priority):
+    def update(self, tree_index: int, priority: float) -> None:
         # Change = new priority score - former priority score
         change = priority - self.tree[tree_index]
         self.tree[tree_index] = priority
 
-        # then propagate the change through tree
-        while tree_index != 0:  # this method is faster than the recursive loop in the reference code
+        # Propagate the change through tree
+        while tree_index != 0:  # This is faster than recursively looping
 
             """
             Here we want to access the line above

@@ -7,7 +7,7 @@ from scipy.spatial import distance
 from typing import Dict, List
 from vizdoom import *
 
-from model import Algorithm
+from src.training.model import Algorithm
 
 
 class Scenario:
@@ -79,7 +79,7 @@ class Scenario:
     def shape_reward(self, reward: float, game_vars: deque) -> float:
         return reward
 
-    def additional_stats(self, game_vars: List[int]) -> Dict:
+    def additional_stats(self, game_vars: deque) -> Dict:
         """
         Implement this method to provide extra scenario specific statistics
         :param game_vars: Game variables of the last [len_vars_history] episodes
@@ -87,7 +87,7 @@ class Scenario:
         """
         return {}
 
-    def get_measurements(self, game_vars: List[int], **kwargs) -> np.ndarray:
+    def get_measurements(self, game_vars: deque, **kwargs) -> np.ndarray:
         """
         Retrieve the measurement after transition for the direct future prediction algorithm
         :param game_vars: Game variables of the last [len_vars_history] episodes

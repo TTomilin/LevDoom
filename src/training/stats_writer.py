@@ -39,7 +39,7 @@ class Statistics:
 
     def log_episode(self, n_game: int, time_step: int, duration: float, total_reward: float, frames_alive: int) -> None:
         print(f'Episode Finished / n_game {n_game:d} / FRAMES {time_step:d} / TIME {duration:.2f} / '
-              f'STATE {self.get_state(time_step):s} / EPSILON {self.agent.epsilon:.4f} / REWARD {total_reward:.1f} / '
+              f'STATE {self.get_state(time_step):s} / EPSILON {self.agent.epsilon:.3f} / REWARD {total_reward:.1f} / '
               f'FRAMES SURVIVED {frames_alive:d} / TASK {self.scenario.task:s}')
 
     def append_episode(self, n_game: int, time_step: int, frames_alive: int, duration: float, reward: float,

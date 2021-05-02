@@ -28,9 +28,9 @@ class Algorithm(Enum):
 
 def build_base_cnn(input_shape: Tuple[int]) -> Tuple:
     input_layer = Input(shape = input_shape)
-    x = Conv2D(32, (8, 8), strides = (4, 4), activation = 'elu', kernel_initializer = he_uniform())(input_layer)
-    x = Conv2D(64, (4, 4), strides = (2, 2), activation = 'elu', kernel_initializer = he_uniform())(x)
-    x = Conv2D(64, (3, 3), strides = (1, 1), activation = 'elu', kernel_initializer = he_uniform())(x)
+    x = Conv2D(32, (8, 8), strides = (4, 4), activation = 'relu', kernel_initializer = he_uniform())(input_layer)
+    x = Conv2D(64, (4, 4), strides = (2, 2), activation = 'relu', kernel_initializer = he_uniform())(x)
+    x = Conv2D(64, (3, 3), strides = (1, 1), activation = 'relu', kernel_initializer = he_uniform())(x)
     x = Flatten()(x)
     return input_layer, x
 
@@ -40,12 +40,12 @@ def dueling_dqn(input_shape: Tuple[int], action_size: int, learning_rate: float)
     state_input, x = build_base_cnn(input_shape)
 
     # State value tower - V
-    state_value = Dense(256, activation = 'elu', kernel_initializer = he_uniform())(x)
+    state_value = Dense(256, activation = 'relu', kernel_initializer = he_uniform())(x)
     state_value = Dense(1, kernel_initializer = he_uniform())(state_value)
     state_value = Lambda(lambda s: K.expand_dims(s[:, 0], axis = -1), output_shape = (action_size,))(state_value)
 
     # Action advantage tower - A
-    action_advantage = Dense(256, activation = 'elu', kernel_initializer = he_uniform())(x)
+    action_advantage = Dense(256, activation = 'relu', kernel_initializer = he_uniform())(x)
     action_advantage = Dense(action_size, kernel_initializer = he_uniform())(action_advantage)
     action_advantage = Lambda(lambda a: a[:, :] - K.mean(a[:, :], keepdims = True), output_shape = (action_size,))(
         action_advantage)

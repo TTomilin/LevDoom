@@ -151,7 +151,8 @@ class Agent:
         self.model_version.version = next_model_version(self.model_path)
         path = self.next_model_path()
         print(f"Saving model {path.split('/')[-1]}...")
-        self.model.save_weights(path)
+        with self.lock:
+            self.model.save_weights(path)
 
     def latest_model_path(self) -> str:
         return self.model_path.replace('*', str(self.model_version.version - 1))
@@ -303,7 +304,8 @@ class DuelingDDQNAgent(Agent):
         :param state: the current observable state that the agent is in
         :return: index of the action with the highest Q-value
         """
-        return random.randrange(self.action_size) if np.random.rand() <= self.epsilon else np.argmax(self.target_model.predict(state))
+        return random.randrange(self.action_size) if np.random.rand() <= self.epsilon else np.argmax(
+            self.target_model.predict(state))
 
     def train(self) -> None:
         """
@@ -317,7 +319,7 @@ class DuelingDDQNAgent(Agent):
 
         # Obtain random mini-batch from memory
         if self.memory.prioritized:
-            tree_idx, mini_batch, ISWeights_mb = self.memory.sample(self.batch_size)
+            tree_idx, mini_batch, IS_weights = self.memory.sample(self.batch_size)
         else:
             mini_batch = self.memory.sample(batch_size)
 
@@ -356,7 +358,9 @@ class DuelingDDQNAgent(Agent):
             target[i][actions[i]] = rewards[i] + terminal * self.gamma * best_action_value
 
         with self.lock:
-            loss = self.model.train_on_batch(states, target)
+            # To correct for the bias, use importance sampling weights
+            # Adjust the updating by reducing the weights of the prominent samples
+            loss = self.model.train_on_batch(states, target, sample_weight = IS_weights)
 
         if self.memory.prioritized:
             # Update priority in the SumTree

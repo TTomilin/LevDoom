@@ -46,10 +46,12 @@ if __name__ == "__main__":
     base_dir = '../../'
     model_name_addition = ''
 
+    lock = Lock()
+
     # Specify model
     # algorithm = Algorithm.DFP
-    # algorithm = Algorithm.DUELING_DDQN
-    algorithm = Algorithm.DUELING_DDRQN
+    algorithm = Algorithm.DUELING_DDQN
+    # algorithm = Algorithm.DUELING_DDRQN
     # algorithm = Algorithm.C51_DDQN
     # algorithm = Algorithm.DRQN
 
@@ -139,11 +141,11 @@ if __name__ == "__main__":
     # Create Agent
     # agent = DRQNAgent(memory, (img_rows, img_cols), state_size, action_size, model_path, model_version,
     agent = DuelingDDQNAgent(memory, (img_rows, img_cols), state_size, action_size, model_path, model_version,
-    # agent = DFPAgent(memory, (img_rows, img_cols), state_size, action_size, model_path, model_version,
-                     [model, target_model], Lock(), observe)
+                             # agent = DFPAgent(memory, (img_rows, img_cols), state_size, action_size, model_path, model_version,
+                             [model, target_model], lock, observe)
 
     # Create Trainer
-    trainer = AsynchronousTrainer(agent, Lock(), decay_epsilon, model_save_freq = model_save_freq,
+    trainer = AsynchronousTrainer(agent, lock, decay_epsilon, model_save_freq = model_save_freq,
                                   memory_update_freq = memory_update_freq)
 
     # Load Experience

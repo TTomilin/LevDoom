@@ -61,7 +61,7 @@ class ExperienceReplay:
 
         self.buffer.add(max_priority, experience)  # set the max p for new p
 
-    def sample(self, batch_size: int, trace_length = 1) -> List:
+    def sample(self, batch_size: int, trace_length = 1):
         """
         Sample a batch of transitions from replay buffer
         :param batch_size: size of the sampled batch
@@ -89,10 +89,10 @@ class ExperienceReplay:
         # Calculate the priority segment
 
         # Divide the Range[0, p_total] into n ranges
-        priority_segment = self.buffer.total_priority / batch_size  # priority segment
+        priority_segment = self.buffer.total_priority / batch_size  # Priority segment
 
         # Increase the PER_b each time a new minibatch is sampled
-        self.PER_b = np.min([1., self.PER_b + self.PER_b_increment])  # max = 1
+        self.PER_b = np.min([1., self.PER_b + self.PER_b_increment])  # Max = 1
 
         # Calculate the max_weight. Set it to a small value to avoid division by zero
         p_min = np.min(self.buffer.tree[-self.buffer.capacity:]) / self.buffer.total_priority

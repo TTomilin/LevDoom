@@ -8,7 +8,7 @@ import skimage.color
 import skimage.transform
 from numpy import ndarray
 from threading import Lock
-from typing import Tuple
+from typing import Tuple, Union
 
 from memory import ExperienceReplay
 from model import ModelVersion
@@ -115,7 +115,8 @@ class Agent:
         :return: None
         """
         print('Updating target model...')
-        self.target_model.set_weights(self.model.get_weights())
+        with self.lock:
+            self.target_model.set_weights(self.model.get_weights())
 
     def preprocess_img(self, img, size = None):
         if size is None:
@@ -145,9 +146,9 @@ class Agent:
         """
         from utils import next_model_version
 
-        if self.local_model_version.version < self.model_version.version:
-            self.local_model_version.version = self.model_version.version
-            return
+        # if self.local_model_version.version < self.model_version.version:
+        #     self.local_model_version.version = self.model_version.version
+        #     return
         self.model_version.version = next_model_version(self.model_path)
         path = self.next_model_path()
         print(f"Saving model {path.split('/')[-1]}...")
@@ -190,7 +191,7 @@ class DRQNAgent(Agent):
     def transform_new_state(self, _, new_state) -> []:
         return self.transform_state(new_state)
 
-    def get_action(self, state: dict, *args) -> []:
+    def get_action(self, state: dict, *args) -> Union[int, ndarray[int]]:
         """
         Retrieve action using epsilon-greedy policy
         :param state: the current observable state that the agent is in
@@ -205,7 +206,7 @@ class DRQNAgent(Agent):
         q_values = self.target_model.predict(last_traces)
         return np.argmax(q_values)
 
-    def train(self) -> None:
+    def train(self) -> Tuple[Union[ndarray, int, float, complex], float]:
         """
         Train on [batch_size] random samples from experience replay
         :return: the maximum Q-value and the training loss
@@ -307,7 +308,7 @@ class DuelingDDQNAgent(Agent):
         return random.randrange(self.action_size) if np.random.rand() <= self.epsilon else np.argmax(
             self.target_model.predict(state))
 
-    def train(self) -> None:
+    def train(self) -> Tuple[Union[ndarray, int, float, complex], float]:
         """
         Train on [batch_size] random samples from experience replay
         :param time_step: the total number of performed iterations
@@ -357,15 +358,17 @@ class DuelingDDQNAgent(Agent):
 
             target[i][actions[i]] = rewards[i] + terminal * self.gamma * best_action_value
 
-        with self.lock:
-            # To correct for the bias, use importance sampling weights
-            # Adjust the updating by reducing the weights of the prominent samples
-            loss = self.model.train_on_batch(states, target, sample_weight = IS_weights)
-
         if self.memory.prioritized:
+            with self.lock:
+                # To correct for the bias, use importance sampling weights
+                # Adjust the updating by reducing the weights of the prominent samples
+                loss = self.model.train_on_batch(states, target, sample_weight = IS_weights)
             # Update priority in the SumTree
             absolute_errors = np.abs(np.mean(target_old - target, axis = 1))
             self.memory.batch_update(tree_idx, absolute_errors)
+        else:
+            with self.lock:
+                loss = self.model.train_on_batch(states, target)
 
         # Update the target model to be same with model
         if not self.time_step % self.update_target_freq:

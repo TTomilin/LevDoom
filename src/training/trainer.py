@@ -9,7 +9,6 @@ from agent import Agent
 class AsynchronousTrainer:
     def __init__(self,
                  agent: Agent,
-                 lock: Lock,
                  decay_epsilon = False,
                  initial_epsilon = 1.0,
                  final_epsilon = 0.001,
@@ -19,7 +18,6 @@ class AsynchronousTrainer:
                  ):
 
         self.agent = agent
-        self.lock = lock
 
         if not decay_epsilon:
             self.agent.explore = 0
@@ -54,8 +52,7 @@ class AsynchronousTrainer:
                 self.agent.epsilon = max(self.final_epsilon, new_epsilon)
 
             # Train the model
-            with self.lock:
-                Q_max, loss = self.agent.train()
+            Q_max, loss = self.agent.train()
             Q_values.append(Q_max)
             losses.append(loss)
 

@@ -145,7 +145,7 @@ if __name__ == "__main__":
                              [model, target_model], lock, observe)
 
     # Create Trainer
-    trainer = AsynchronousTrainer(agent, lock, decay_epsilon, model_save_freq = model_save_freq,
+    trainer = AsynchronousTrainer(agent, decay_epsilon, model_save_freq = model_save_freq,
                                   memory_update_freq = memory_update_freq)
 
     # Load Experience

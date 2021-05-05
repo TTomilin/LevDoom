@@ -8,7 +8,7 @@ import skimage.color
 import skimage.transform
 from numpy import ndarray
 from threading import Lock
-from typing import Tuple, Union
+from typing import Tuple
 
 from memory import ExperienceReplay
 from model import ModelVersion
@@ -55,7 +55,6 @@ class Agent:
         self.frames_per_action = frames_per_action
         self.observe = observe  # Collect Experience Replay
         self.explore = explore  # Decay epsilon
-        self.time_step = None
 
         # Lock shared across threads
         self.lock = lock
@@ -102,10 +101,11 @@ class Agent:
         """
         raise NotImplementedError
 
-    def train(self) -> (float, float):
+    def train(self, time_step) -> (float, float):
         """
         Implement this method to perform a weight update of the (online) network
-        :return: None
+        :param time_step: the number of performed training iterations
+        :return: the training loss and the maximum Q-value if applicable to the model
         """
         raise NotImplementedError
 
@@ -191,7 +191,7 @@ class DRQNAgent(Agent):
     def transform_new_state(self, _, new_state) -> []:
         return self.transform_state(new_state)
 
-    def get_action(self, state: dict, *args) -> Union[int, ndarray[int]]:
+    def get_action(self, state: dict, *args) -> []:
         """
         Retrieve action using epsilon-greedy policy
         :param state: the current observable state that the agent is in
@@ -206,9 +206,10 @@ class DRQNAgent(Agent):
         q_values = self.target_model.predict(last_traces)
         return np.argmax(q_values)
 
-    def train(self) -> Tuple[Union[ndarray, int, float, complex], float]:
+    def train(self, time_step) -> Tuple:
         """
         Train on [batch_size] random samples from experience replay
+        :param time_step: the number of performed training iterations
         :return: the maximum Q-value and the training loss
         """
 
@@ -251,7 +252,7 @@ class DRQNAgent(Agent):
             loss = self.model.train_on_batch(states, target)
 
         # Update the target model to be same with model
-        if self.time_step % self.update_target_freq == 0:
+        if not time_step % self.update_target_freq:
             self.update_target_model()
 
         return np.max(target[-1, -1]), loss
@@ -305,18 +306,23 @@ class DuelingDDQNAgent(Agent):
         :param state: the current observable state that the agent is in
         :return: index of the action with the highest Q-value
         """
-        return random.randrange(self.action_size) if np.random.rand() <= self.epsilon else np.argmax(
-            self.target_model.predict(state))
+        return random.randrange(self.action_size) if np.random.rand() <= self.epsilon \
+            else np.argmax(self.target_model.predict(state))
+        # if np.random.rand() <= self.epsilon:
+        #     return random.randrange(self.action_size)
+        # else:
+        #     with self.lock:
+        #         return np.argmax(self.target_model.predict(state))
 
-    def train(self) -> Tuple[Union[ndarray, int, float, complex], float]:
+    def train(self, time_step) -> Tuple:
         """
         Train on [batch_size] random samples from experience replay
-        :param time_step: the total number of performed iterations
+        :param time_step: the number of performed training iterations
         :return: the maximum Q-value and the training loss
         """
 
-        batch_size = self.batch_size if self.memory.prioritized else min(self.batch_size,
-                                                                         self.memory.buffer_size)  # Smaller sample in case of insufficient experiences
+        # Smaller sample in case of insufficient experiences
+        batch_size = self.batch_size if self.memory.prioritized else min(self.batch_size, self.memory.buffer_size)
 
         # Obtain random mini-batch from memory
         if self.memory.prioritized:
@@ -360,9 +366,10 @@ class DuelingDDQNAgent(Agent):
 
         if self.memory.prioritized:
             with self.lock:
+                loss = self.model.train_on_batch(states, target)
                 # To correct for the bias, use importance sampling weights
                 # Adjust the updating by reducing the weights of the prominent samples
-                loss = self.model.train_on_batch(states, target, sample_weight = IS_weights)
+                # loss = self.model.train_on_batch(states, target, sample_weight = IS_weights)
             # Update priority in the SumTree
             absolute_errors = np.abs(np.mean(target_old - target, axis = 1))
             self.memory.batch_update(tree_idx, absolute_errors)
@@ -371,7 +378,7 @@ class DuelingDDQNAgent(Agent):
                 loss = self.model.train_on_batch(states, target)
 
         # Update the target model to be same with model
-        if not self.time_step % self.update_target_freq:
+        if not time_step % self.update_target_freq:
             self.update_target_model()
 
         return np.max(target[-1, -1]), loss
@@ -428,7 +435,7 @@ class C51DDQNAgent(DuelingDDQNAgent):
 
         return action_idx
 
-    def train(self) -> Tuple[ndarray, float]:
+    def train(self, time_step) -> Tuple[ndarray, float]:
         # Smaller sample size in case of insufficient experiences
         num_samples = self.batch_size if self.memory.prioritized else min(self.batch_size, self.memory.buffer_size)
         replay_samples = self.memory.sample(num_samples)
@@ -473,7 +480,7 @@ class C51DDQNAgent(DuelingDDQNAgent):
                     m_prob[action[i]][i][int(m_u)] += z_[optimal_action_idxs[i]][i][j] * (bj - m_l)
 
         # Update the target model to be same with model
-        if not self.time_step % self.update_target_freq:
+        if not time_step % self.update_target_freq:
             self.update_target_model()
 
         loss = self.model.fit(state_inputs, m_prob, batch_size = self.batch_size, epochs = 1, verbose = 0)
@@ -546,7 +553,7 @@ class DFPAgent(Agent):
         return np.argmax(obj)
 
     # Pick samples randomly from replay memory (with batch_size)
-    def train(self):
+    def train(self, time_step):
         """
         Train on a single mini-batch
         """

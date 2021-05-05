@@ -42,7 +42,7 @@ class Doom:
         statistics = Statistics(agent, scenario, self.stats_save_freq, self.append_statistics)
     
         # Statistic counters
-        agent.time_step, n_game, total_reward, frames_alive, total_duration = 0, 0, 0, 0, 0
+        time_step, n_game, total_reward, frames_alive, total_duration = 0, 0, 0, 0, 0
         start_time = time.time()
     
         current_state = agent.transform_initial_state(game.get_state())
@@ -59,7 +59,7 @@ class Doom:
         while n_game < self.max_epochs:
 
             # With ϵ select a random action atat, otherwise select a = argmaxQ(st,a)
-            improved_epsilon = 0.01 + (1.0 - 0.01) * np.exp(-0.00005 * agent.time_step)
+            improved_epsilon = 0.01 + (1.0 - 0.01) * np.exp(-0.00005 * time_step)
 
             action_idx = agent.get_action(current_state, measurements)
             game.set_action(idx_to_action(action_idx, agent.action_size))
@@ -73,7 +73,7 @@ class Doom:
                 total_duration += duration
     
                 # Append statistics
-                statistics.append_episode(n_game, agent.time_step, frames_alive, duration, total_reward, game_variables)
+                statistics.append_episode(n_game, time_step, frames_alive, duration, total_reward, game_variables)
                 # print(f'Improved epsilon {improved_epsilon:.4f}')
     
                 # Reset counters
@@ -109,14 +109,14 @@ class Doom:
                 measurements = scenario.get_measurements(game_variables, health_kit = health_kits, poison = poison)
     
             current_state = new_state
-            agent.time_step += 1
+            time_step += 1
 
             if terminated:
                 health_kits = 0
                 poison = 0
     
             # Save agent's performance statistics
-            if not agent.time_step % statistics.save_frequency:
+            if not time_step % statistics.save_frequency:
                 statistics.write(n_game, total_duration)
     
         # Final statistics

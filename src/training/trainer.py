@@ -63,9 +63,9 @@ class AsynchronousTrainer:
                 losses = []
 
             # Store the weights of the model after [model_save_freq] iterations
-            if not self.agent.time_step % self.model_save_freq:
+            if not train_iteration % self.model_save_freq:
                 self.agent.save_model()
 
             # Save the experiences from the replay buffer after [update_experience_freq] iterations
-            if not self.agent.time_step % self.memory_update_freq:
+            if not train_iteration % self.memory_update_freq:
                 self.agent.memory.save()

@@ -50,9 +50,9 @@ class VizDoomEnv(ViZDoom):
             self.environment.setSeed(seed)
         self.environment.init()
 
-        # self.state_shape = (64, 64, 4)
+        self.state_shape = (64, 64, 4)
         # self.state_shape = (3, 480, 640)
-        self.state_shape = (64, 64)
+        # self.state_shape = (64, 64)
         self.num_variables = self.environment.get_available_game_variables_size()
         self.num_buttons = self.environment.get_available_buttons_size()
 
@@ -73,8 +73,8 @@ class VizDoomEnv(ViZDoom):
 
     def get_states(self):
         state = self.environment.get_state()
-        # stacked_frames = transform_new_state(self.current_states['screen'], state) if self.current_states else transform_initial_state(state)
-        stacked_frames = preprocess_img(state.screen_buffer, (64, 64))
+        stacked_frames = transform_new_state(self.current_states['screen'], state) if self.current_states else transform_initial_state(state)
+        # stacked_frames = preprocess_img(state.screen_buffer, (64, 64))
         # return OrderedDict(screen = state.screen_buffer, variables = state.game_variables)
         return OrderedDict(screen = stacked_frames, variables = state.game_variables)
 

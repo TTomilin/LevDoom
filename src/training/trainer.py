@@ -1,7 +1,5 @@
-from threading import Lock
-from time import sleep
-
 import numpy as np
+from time import sleep
 
 from agent import Agent
 
@@ -52,7 +50,7 @@ class AsynchronousTrainer:
                 self.agent.epsilon = max(self.final_epsilon, new_epsilon)
 
             # Train the model
-            Q_max, loss = self.agent.train()
+            Q_max, loss = self.agent.train(train_iteration)
             Q_values.append(Q_max)
             losses.append(loss)
 

@@ -7,7 +7,7 @@ from scipy.spatial import distance
 from typing import Dict, List
 from vizdoom import *
 
-from src.training.model import Algorithm
+from model import Algorithm
 
 
 class Scenario:
@@ -23,7 +23,7 @@ class Scenario:
                  base_dir: str,
                  algorithm: Algorithm,
                  sub_task: SubTask,
-                 trained_task: SubTask,
+                 trained_task: str,
                  window_visible: bool,
                  n_tasks: int,
                  render_hud: bool,
@@ -43,7 +43,7 @@ class Scenario:
         # Tasks
         self.n_tasks = n_tasks
         self.task = sub_task.name.lower()
-        self.trained_task = trained_task.name.lower() if trained_task else None
+        self.trained_task = trained_task
 
         # VizDoom
         self.game = DoomGame()
@@ -63,12 +63,10 @@ class Scenario:
         if self.trained_task:
             sub_folder = f'test/{self.task}/{self.trained_task}'
         elif self.n_tasks > 1:
-            sub_folder = f'multi/{self.task}'
+            sub_folder = f'multi/{self.name_addition}/{self.task}' if self.name_addition else f'multi/{self.task}'
         else:
-            sub_folder = f'train/{self.task}'
-        # sub_folder = f'test/{self.task}/{self.trained_task}' if self.trained_task \
-        #     else f'multi/{self.task}' if self.multi_train else f'train/{self.task}'
-        return f'{self.base_dir}statistics/{self.name}/{sub_folder}{self.name_addition}.json'
+            sub_folder = f'train/{self.task}{self.name_addition}'
+        return f'{self.base_dir}statistics/{self.name}/{sub_folder}.json'
 
     @property
     def config_path(self) -> str:
@@ -122,7 +120,7 @@ class DefendTheCenter(Scenario):
         FLYING_ENEMIES = auto()
         RESIZED_ENEMIES = auto()
 
-    def __init__(self, base_dir: str, algorithm: Algorithm, sub_task: SubTask, trained_task: SubTask,
+    def __init__(self, base_dir: str, algorithm: Algorithm, sub_task: SubTask, trained_task: str,
                  window_visible: bool, n_tasks: int, render_hud: bool, name_addition: str) -> Scenario:
         super().__init__('defend_the_center', base_dir, algorithm, sub_task, trained_task, window_visible, n_tasks,
                          render_hud, name_addition)
@@ -171,7 +169,7 @@ class HealthGathering(Scenario):
         RESIZED_KITS = auto()
         STIMPACKS_POISON = auto()
 
-    def __init__(self, base_dir: str, algorithm: Algorithm, sub_task: SubTask, trained_task: SubTask,
+    def __init__(self, base_dir: str, algorithm: Algorithm, sub_task: SubTask, trained_task: str,
                  window_visible: bool, n_tasks: int, render_hud: bool, name_addition: str) -> Scenario:
         super().__init__('health_gathering', base_dir, algorithm, sub_task, trained_task, window_visible, n_tasks,
                          render_hud, name_addition)
@@ -198,7 +196,7 @@ class SeekAndKill(Scenario):
         MIXED_ENEMIES = auto()
         RESIZED_ENEMIES = auto()
 
-    def __init__(self, base_dir: str, algorithm: Algorithm, sub_task: SubTask, trained_task: SubTask,
+    def __init__(self, base_dir: str, algorithm: Algorithm, sub_task: SubTask, trained_task: str,
                  window_visible: bool, n_tasks: int, render_hud: bool, name_addition: str) -> Scenario:
         super().__init__('seek_and_kill', base_dir, algorithm, sub_task, trained_task, window_visible, n_tasks,
                          render_hud, name_addition)
@@ -259,7 +257,7 @@ class DodgeProjectiles(Scenario):
         TALL_AGENT = auto()
         ARACHNOTRON = auto()
 
-    def __init__(self, base_dir: str, algorithm: Algorithm, sub_task: SubTask, trained_task: SubTask,
+    def __init__(self, base_dir: str, algorithm: Algorithm, sub_task: SubTask, trained_task: str,
                  window_visible: bool, n_tasks: int, render_hud: bool, name_addition: str) -> Scenario:
         super().__init__('dodge_projectiles', base_dir, algorithm, sub_task, trained_task, window_visible, n_tasks,
                          render_hud, name_addition)

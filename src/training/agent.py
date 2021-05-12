@@ -153,7 +153,7 @@ class Agent:
         path = self.next_model_path()
         print(f"Saving model {path.split('/')[-1]}...")
         with self.lock:
-            self.model.save_weights(path)
+            self.target_model.save_weights(path)
 
     def latest_model_path(self) -> str:
         return self.model_path.replace('*', str(self.model_version.version - 1))
@@ -306,13 +306,13 @@ class DuelingDDQNAgent(Agent):
         :param state: the current observable state that the agent is in
         :return: index of the action with the highest Q-value
         """
-        return random.randrange(self.action_size) if np.random.rand() <= self.epsilon \
-            else np.argmax(self.target_model.predict(state))
-        # if np.random.rand() <= self.epsilon:
-        #     return random.randrange(self.action_size)
-        # else:
-        #     with self.lock:
-        #         return np.argmax(self.target_model.predict(state))
+        # return random.randrange(self.action_size) if np.random.rand() <= self.epsilon \
+        #     else np.argmax(self.target_model.predict(state))
+        if np.random.rand() <= self.epsilon:
+            return random.randrange(self.action_size)
+        else:
+            with self.lock:
+                return np.argmax(self.target_model.predict(state))
 
     def train(self, time_step) -> Tuple:
         """

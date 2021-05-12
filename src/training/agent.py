@@ -332,14 +332,15 @@ class DuelingDDQNAgent(Agent):
 
         states = np.zeros(((batch_size,) + self.state_size))
         states_next = np.zeros(((batch_size,) + self.state_size))
-        actions, rewards, done = [], [], []
+        actions, rewards, done, task_ids = [], [], [], []
 
         for i in range(self.batch_size):
             states[i, :, :, :] = mini_batch[i][0]
             actions.append(mini_batch[i][1])
             rewards.append(mini_batch[i][2])
             states_next[i, :, :, :] = mini_batch[i][3]
-            done.append(mini_batch[i][-1])
+            done.append(mini_batch[i][-2])
+            task_ids.append(mini_batch[i][-1])
 
         # Predict Q-values for starting state using the main network
         target = self.model.predict(states)
@@ -450,7 +451,7 @@ class C51DDQNAgent(DuelingDDQNAgent):
             action.append(replay_samples[i][1])
             reward.append(replay_samples[i][2])
             next_states[i, :, :, :] = replay_samples[i][3]
-            done.append(replay_samples[i][-1])
+            done.append(replay_samples[i][-2])
 
         # Double DQN
         z = self.model.predict(next_states)  # Return a list [32x51, 32x51, 32x51]

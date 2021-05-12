@@ -10,6 +10,11 @@ from vizdoom import *
 from model import Algorithm
 
 
+class PerformanceIndicator(Enum):
+    FRAMES_ALIVE = auto()
+    KILL_COUNT = auto()
+
+
 class Scenario:
     """ Generic Scenario.
     Extend this abstract scenario class to define new VizDoom scenarios
@@ -100,6 +105,15 @@ class Scenario:
         """
         raise NotImplementedError
 
+    def get_performance_indicator(self) -> PerformanceIndicator:
+        """
+        Every scenario has a key performance indicator (KPI) to determine the running performance
+        of the agent. This is used for dynamic task prioritization, where the loss is scaled
+        proportional to the task difficulty. This indicator determines the complexity of the task.
+        :return: The type of the performance indicator of the implementing scenario
+        """
+        raise NotImplementedError
+
 
 class DefendTheCenter(Scenario):
     """
@@ -150,6 +164,9 @@ class DefendTheCenter(Scenario):
         # TODO Determine suitable measurements for DFP
         pass
 
+    def get_performance_indicator(self) -> PerformanceIndicator:
+        return PerformanceIndicator.FRAMES_ALIVE
+
 
 class DTCGameVariable(Enum):
     KILL_COUNT = 0
@@ -182,6 +199,9 @@ class HealthGathering(Scenario):
 
     def get_measurements(self, game_variables: Array, **kwargs) -> np.ndarray:
         return np.array([game_variables[-1][0] / 30.0, kwargs['health_kit'] / 10.0, kwargs['poison']])
+
+    def get_performance_indicator(self) -> PerformanceIndicator:
+        return PerformanceIndicator.FRAMES_ALIVE
 
 
 class SeekAndKill(Scenario):
@@ -236,6 +256,9 @@ class SeekAndKill(Scenario):
         # TODO Determine suitable measurements for DFP
         pass
 
+    def get_performance_indicator(self) -> PerformanceIndicator:
+        return PerformanceIndicator.KILL_COUNT
+
 
 class SKGameVariable(Enum):
     KILL_COUNT = 0
@@ -275,6 +298,9 @@ class DodgeProjectiles(Scenario):
     def get_measurements(self, game_vars: Array, **kwargs) -> np.ndarray:
         # TODO Determine suitable measurements for DFP
         pass
+
+    def get_performance_indicator(self) -> PerformanceIndicator:
+        return PerformanceIndicator.FRAMES_ALIVE
 
 
 class DPGameVariable(Enum):

@@ -27,8 +27,9 @@ class Doom:
         train = self.train
         agent = self.agent
         scenario = self.scenario
-        print(f'Running scenario {scenario.task}, thread {get_ident()}')
-    
+        task_id = scenario.task
+        print(f'Running scenario {task_id}, thread {get_ident()}')
+
         game = scenario.game
         game.init()
         game.new_episode()
@@ -105,7 +106,7 @@ class Doom:
     
             # Save the sample <s, a, r, s', t> to the episode buffer
             if train:
-                agent.memory.add((current_state, action_idx, reward, new_state, measurements, terminated))
+                agent.memory.add((current_state, action_idx, reward, new_state, measurements, terminated, task_id))
                 measurements = scenario.get_measurements(game_variables, health_kit = health_kits, poison = poison)
     
             current_state = new_state

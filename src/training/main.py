@@ -23,6 +23,7 @@ if __name__ == "__main__":
     load_model = False
     load_experience = False
     save_experience = False
+    task_priority = True
     prioritized_replay = True
     append_statistics = False
     decay_epsilon = True
@@ -41,10 +42,11 @@ if __name__ == "__main__":
     stats_save_freq = 5000
     model_save_freq = 5000
     memory_update_freq = 5000
+    KPI_update_freq = 10
 
     # Paths
     base_dir = '../../'
-    model_name_addition = ''
+    model_name_addition = 'KPI_Test'
 
     lock = Lock()
 
@@ -57,22 +59,22 @@ if __name__ == "__main__":
 
     # Specify task(s)
 
-    # current_tasks = [task for task in DefendTheCenter.SubTask]
-    # current_tasks.remove(DefendTheCenter.SubTask.STONE_WALL)
-    # current_tasks.remove(DefendTheCenter.SubTask.FLYING_ENEMIES)
-    # current_tasks.remove(DefendTheCenter.SubTask.MULTI)
+    current_tasks = [task for task in DefendTheCenter.SubTask]
+    current_tasks.remove(DefendTheCenter.SubTask.STONE_WALL)
+    current_tasks.remove(DefendTheCenter.SubTask.FLYING_ENEMIES)
+    current_tasks.remove(DefendTheCenter.SubTask.MULTI)
     # current_tasks = [task for task in HealthGathering.SubTask]
     # current_tasks.remove(HealthGathering.SubTask.STIMPACKS_POISON)
     # current_tasks.remove(HealthGathering.SubTask.SHADED_KITS)
     # current_tasks.remove(HealthGathering.SubTask.MULTI)
-    # current_tasks = [task for task in DodgeProjectiles.SubTask]
-    # current_tasks.remove(DodgeProjectiles.SubTask.MANCUBUS)
-    # current_tasks.remove(DodgeProjectiles.SubTask.ARACHNOTRON)
-    # current_tasks.remove(DodgeProjectiles.SubTask.MULTI)
     # current_tasks = [task for task in SeekAndKill.SubTask]
     # current_tasks.remove(SeekAndKill.SubTask.INVULNERABLE)
     # current_tasks.remove(SeekAndKill.SubTask.RED)
     # current_tasks.remove(SeekAndKill.SubTask.MULTI)
+    # current_tasks = [task for task in DodgeProjectiles.SubTask]
+    # current_tasks.remove(DodgeProjectiles.SubTask.MANCUBUS)
+    # current_tasks.remove(DodgeProjectiles.SubTask.ARACHNOTRON)
+    # current_tasks.remove(DodgeProjectiles.SubTask.MULTI)
 
     # current_tasks = [SeekAndKill.SubTask.INVULNERABLE]
     # trained_task = SeekAndKill.SubTask.MULTI
@@ -140,9 +142,9 @@ if __name__ == "__main__":
 
     # Create Agent
     # agent = DRQNAgent(memory, (img_rows, img_cols), state_size, action_size, model_path, model_version,
+    # agent = DFPAgent(memory, (img_rows, img_cols), state_size, action_size, model_path, model_version,
     agent = DuelingDDQNAgent(memory, (img_rows, img_cols), state_size, action_size, model_path, model_version,
-                             # agent = DFPAgent(memory, (img_rows, img_cols), state_size, action_size, model_path, model_version,
-                             [model, target_model], lock, observe)
+                             [model, target_model], lock, observe, task_priority = task_priority)
 
     # Create Trainer
     trainer = AsynchronousTrainer(agent, decay_epsilon, model_save_freq = model_save_freq,
@@ -152,7 +154,7 @@ if __name__ == "__main__":
     if load_experience:
         agent.memory.load()
 
-    games = [Doom(agent, scenario, stats_save_freq, max_epochs, append_statistics, train) for scenario in scenarios]
+    games = [Doom(agent, scenario, stats_save_freq, max_epochs, KPI_update_freq, append_statistics, train) for scenario in scenarios]
 
     # Play DOOM
     tasks = [Thread(target = doom.play) for doom in games]

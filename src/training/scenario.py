@@ -10,15 +10,14 @@ from vizdoom import *
 from model import Algorithm
 
 
-class PerformanceIndicator(Enum):
-    FRAMES_ALIVE = auto()
-    KILL_COUNT = auto()
-
-
 class Scenario:
     """ Generic Scenario.
     Extend this abstract scenario class to define new VizDoom scenarios
     """
+
+    class PerformanceIndicator(Enum):
+        FRAMES_ALIVE = auto()
+        KILL_COUNT = auto()
 
     class SubTask(Enum):
         DEFAULT = auto()
@@ -164,8 +163,8 @@ class DefendTheCenter(Scenario):
         # TODO Determine suitable measurements for DFP
         pass
 
-    def get_performance_indicator(self) -> PerformanceIndicator:
-        return PerformanceIndicator.FRAMES_ALIVE
+    def get_performance_indicator(self) -> Scenario.PerformanceIndicator:
+        return Scenario.PerformanceIndicator.FRAMES_ALIVE
 
 
 class DTCGameVariable(Enum):
@@ -200,8 +199,8 @@ class HealthGathering(Scenario):
     def get_measurements(self, game_variables: Array, **kwargs) -> np.ndarray:
         return np.array([game_variables[-1][0] / 30.0, kwargs['health_kit'] / 10.0, kwargs['poison']])
 
-    def get_performance_indicator(self) -> PerformanceIndicator:
-        return PerformanceIndicator.FRAMES_ALIVE
+    def get_performance_indicator(self) -> Scenario.PerformanceIndicator:
+        return Scenario.PerformanceIndicator.FRAMES_ALIVE
 
 
 class SeekAndKill(Scenario):
@@ -256,8 +255,8 @@ class SeekAndKill(Scenario):
         # TODO Determine suitable measurements for DFP
         pass
 
-    def get_performance_indicator(self) -> PerformanceIndicator:
-        return PerformanceIndicator.KILL_COUNT
+    def get_performance_indicator(self) -> Scenario.PerformanceIndicator:
+        return Scenario.PerformanceIndicator.KILL_COUNT
 
 
 class SKGameVariable(Enum):
@@ -299,8 +298,8 @@ class DodgeProjectiles(Scenario):
         # TODO Determine suitable measurements for DFP
         pass
 
-    def get_performance_indicator(self) -> PerformanceIndicator:
-        return PerformanceIndicator.FRAMES_ALIVE
+    def get_performance_indicator(self) -> Scenario.PerformanceIndicator:
+        return Scenario.PerformanceIndicator.FRAMES_ALIVE
 
 
 class DPGameVariable(Enum):

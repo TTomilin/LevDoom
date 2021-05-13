@@ -1,3 +1,7 @@
+import json
+
+from typing import TextIO
+
 import math
 import os
 
@@ -55,3 +59,12 @@ def new_episode(game: DoomGame, spawn_point_counter: dict) -> None:
             spawn_point_counter[spawn_point] = 0
         if spawn_point != max(spawn_point_counter, key = spawn_point_counter.get):
             return
+
+
+def array_mean(values):
+    return np.around(np.mean(np.array(values), dtype = "float64"), decimals = 4)
+
+
+def join_stats(stats_file: TextIO, new_stats: dict, metrics_to_rewrite: []) -> dict:
+    return {key: new_stats[key] if key in metrics_to_rewrite else value + new_stats[key]
+            for key, value in json.load(stats_file).items()}

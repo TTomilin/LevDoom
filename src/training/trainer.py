@@ -1,3 +1,5 @@
+import logging
+
 import numpy as np
 from time import sleep
 
@@ -50,7 +52,10 @@ class AsynchronousTrainer:
                 self.agent.epsilon = max(self.final_epsilon, new_epsilon)
 
             # Train the model
-            Q_max, loss = self.agent.train(train_iteration)
+            try:
+                Q_max, loss = self.agent.train(train_iteration)
+            except Exception as error:
+                logging.error('Training agent unsuccessful', error)
             Q_values.append(Q_max)
             losses.append(loss)
 

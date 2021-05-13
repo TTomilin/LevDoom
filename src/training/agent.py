@@ -43,6 +43,7 @@ class Agent:
                  batch_size: int,
                  frames_per_action: int,
                  update_target_freq: int,
+                 task_priority: bool
                  ):
 
         # Dimensions
@@ -75,6 +76,10 @@ class Agent:
 
         # Memory
         self.memory = memory
+        self.task_priority = task_priority
+
+        # Statistics
+        self.KPIs = {}
 
     def transform_initial_state(self, game_state) -> []:
         """
@@ -161,6 +166,11 @@ class Agent:
     def next_model_path(self) -> str:
         return self.model_path.replace('*', str(self.model_version.version))
 
+    def update_KPI(self, task: str, KPI: float):
+        print(f'New KPI for task {task}: {KPI}')
+        with self.lock:
+            self.KPIs[task] = KPI
+
 
 class DRQNAgent(Agent):
 
@@ -179,10 +189,11 @@ class DRQNAgent(Agent):
                  batch_size = 32,
                  trace_length = 4,
                  frames_per_action = 4,
-                 update_target_freq = 3000
+                 update_target_freq = 3000,
+                 task_priority = False
                  ):
         super().__init__(memory, img_dims, state_size, action_size, model_path, model_version, models, lock,
-                         observe, explore, gamma, batch_size, frames_per_action, update_target_freq)
+                         observe, explore, gamma, batch_size, frames_per_action, update_target_freq, task_priority)
         self.trace_length = trace_length
 
     def transform_initial_state(self, game_state) -> []:
@@ -274,10 +285,11 @@ class DuelingDDQNAgent(Agent):
                  gamma = 0.99,
                  batch_size = 32,
                  frames_per_action = 4,
-                 update_target_freq = 3000
+                 update_target_freq = 3000,
+                 task_priority = False
                  ):
         super().__init__(memory, img_dims, state_size, action_size, model_path, model_version, models, lock,
-                         observe, explore, gamma, batch_size, frames_per_action, update_target_freq)
+                         observe, explore, gamma, batch_size, frames_per_action, update_target_freq, task_priority)
 
     def transform_initial_state(self, game_state: []) -> []:
         game_state = game_state.screen_buffer
@@ -333,6 +345,7 @@ class DuelingDDQNAgent(Agent):
         states = np.zeros(((batch_size,) + self.state_size))
         states_next = np.zeros(((batch_size,) + self.state_size))
         actions, rewards, done, task_ids = [], [], [], []
+        sample_weights = np.empty((batch_size, 1))
 
         for i in range(self.batch_size):
             states[i, :, :, :] = mini_batch[i][0]
@@ -352,6 +365,9 @@ class DuelingDDQNAgent(Agent):
         # Predict Q-values for ending state using the target network
         target_val = self.target_model.predict(states_next)
 
+        with self.lock:
+            max_KPI = max(self.KPIs.values())
+
         for i in range(batch_size):
             # Terminal state update only receives no future rewards
             terminal = 0 if done[i] else 1
@@ -365,18 +381,25 @@ class DuelingDDQNAgent(Agent):
 
             target[i][actions[i]] = rewards[i] + terminal * self.gamma * best_action_value
 
-        if self.memory.prioritized:
-            with self.lock:
+            if self.task_priority:
+                task = task_ids[i]
+                KPI = self.KPIs[task]
+                sample_weights[i, 0] = max_KPI / KPI
+
+        with self.lock:
+            if self.task_priority:
+                loss = self.model.train_on_batch(states, target, sample_weight = sample_weights)
+            else:
                 loss = self.model.train_on_batch(states, target)
-                # To correct for the bias, use importance sampling weights
-                # Adjust the updating by reducing the weights of the prominent samples
-                # loss = self.model.train_on_batch(states, target, sample_weight = IS_weights)
+
+        if self.memory.prioritized:
+            # To correct for the bias, use importance sampling weights
+            # Adjust the updating by reducing the weights of the prominent samples
+            # loss = self.model.train_on_batch(states, target, sample_weight = IS_weights)
+
             # Update priority in the SumTree
             absolute_errors = np.abs(np.mean(target_old - target, axis = 1))
             self.memory.batch_update(tree_idx, absolute_errors)
-        else:
-            with self.lock:
-                loss = self.model.train_on_batch(states, target)
 
         # Update the target model to be same with model
         if not time_step % self.update_target_freq:
@@ -402,12 +425,13 @@ class C51DDQNAgent(DuelingDDQNAgent):
                  batch_size = 32,
                  frames_per_action = 4,
                  update_target_freq = 3000,
+                 task_priority = False,
                  num_atoms = 51,  # C51
                  v_max = 20.4,  # Max possible score for Defend the center is 26 - 0.1*26 - 0.3*10 = 20.4
                  v_min = -6.6,  # Min possible score for Defend the center is -0.1*26 - 1 - 0.3*10 = -6.6
                  ):
         super().__init__(memory, img_dims, state_size, action_size, model_path, model_version, models, lock,
-                         observe, explore, gamma, batch_size, frames_per_action, update_target_freq)
+                         observe, explore, gamma, batch_size, frames_per_action, update_target_freq, task_priority)
         # Initialize Atoms
         self.num_atoms = num_atoms
         self.v_max = v_max
@@ -505,11 +529,12 @@ class DFPAgent(Agent):
                  batch_size = 32,
                  frames_per_action = 4,
                  update_target_freq = 3000,
+                 task_priority = False,
                  measurement_size = 3,  # [Health, Medkit, Poison]
                  timesteps = [1, 2, 4, 8, 16, 32],
                  ):
         super().__init__(memory, img_dims, state_size, action_size, model_path, model_version, models, lock,
-                         observe, explore, gamma, batch_size, frames_per_action, update_target_freq)
+                         observe, explore, gamma, batch_size, frames_per_action, update_target_freq, task_priority)
         n_timesteps = len(timesteps)
         self.measurement_size = measurement_size
         self.timesteps = timesteps

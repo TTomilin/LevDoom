@@ -15,12 +15,13 @@ from utils import new_episode, idx_to_action
 
 class Doom:
     def __init__(self, agent: Agent, scenario: Scenario, stats_save_freq = 5000, max_epochs = 3000,
-                 append_statistics = True, train = True):
+                 KPI_update_freq = 10, append_statistics = True, train = True):
         self.train = train
         self.agent = agent
         self.scenario = scenario
         self.max_epochs = max_epochs
         self.stats_save_freq = stats_save_freq
+        self.KPI_update_freq = KPI_update_freq
         self.append_statistics = append_statistics
 
     def play(self) -> None:
@@ -40,7 +41,7 @@ class Doom:
         spawn_point_counter = {}
     
         # Create statistics manager
-        statistics = Statistics(agent, scenario, self.stats_save_freq, self.append_statistics)
+        statistics = Statistics(agent, scenario, self.stats_save_freq, self.KPI_update_freq, self.append_statistics)
     
         # Statistic counters
         time_step, n_game, total_reward, frames_alive, total_duration = 0, 0, 0, 0, 0

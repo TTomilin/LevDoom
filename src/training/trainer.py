@@ -54,10 +54,10 @@ class AsynchronousTrainer:
             # Train the model
             try:
                 Q_max, loss = self.agent.train(train_iteration)
+                Q_values.append(Q_max)
+                losses.append(loss)
             except Exception as error:
                 logging.error('Training agent unsuccessful', error)
-            Q_values.append(Q_max)
-            losses.append(loss)
 
             # Print mean Q_max & mean loss
             if not train_iteration % self.train_report_freq:

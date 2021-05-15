@@ -1,4 +1,5 @@
 import copy
+import logging
 
 import itertools
 import math
@@ -323,8 +324,13 @@ class DuelingDDQNAgent(Agent):
         if np.random.rand() <= self.epsilon:
             return random.randrange(self.action_size)
         else:
-            with self.lock:
-                return np.argmax(self.target_model.predict(state))
+            try:
+                with self.lock:
+                    return np.argmax(self.target_model.predict(state))
+            except Exception as error:
+                logging.error(f'Failed to get action, retrying in 1s. Reason: {error}')
+                return self.get_action(state, args)
+
 
     def train(self, time_step) -> Tuple:
         """
@@ -355,14 +361,16 @@ class DuelingDDQNAgent(Agent):
             done.append(mini_batch[i][-2])
             task_ids.append(mini_batch[i][-1])
 
-        # Predict Q-values for starting state using the main network
+        # Predict Q-values for the current state using the online network
         target = self.model.predict(states)
+
+        # Make a copy of the target for prioritized memory replay
         target_old = np.array(target)
 
-        # Predict best action in ending state using the main network
+        # Predict Q-values for the next state using the online network
         target_next = self.model.predict(states_next)
 
-        # Predict Q-values for ending state using the target network
+        # Predict Q-values for the next state using the target network
         target_val = self.target_model.predict(states_next)
 
         with self.lock:

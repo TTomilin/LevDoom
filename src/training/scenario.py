@@ -59,10 +59,6 @@ class Scenario:
         self.game.set_render_hud(render_hud)
 
     @property
-    def full_name(self) -> str:
-        return f'{self.name}_{self.task}'
-
-    @property
     def stats_path(self) -> str:
         if self.trained_task:
             sub_folder = f'test/{self.task}/{self.trained_task}'
@@ -78,7 +74,7 @@ class Scenario:
 
     @property
     def scenario_path(self) -> str:
-        return f'{self.base_dir}scenarios/{self.name}/{self.full_name}.wad'
+        return f'{self.base_dir}scenarios/{self.name}/{self.task}.wad'
 
     @property
     def statistics_fields(self) -> List[str]:

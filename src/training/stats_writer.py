@@ -62,7 +62,7 @@ class Statistics:
             if KPI_type == Scenario.PerformanceIndicator.FRAMES_ALIVE:
                 KPI = array_mean(self.buffers['frames_alive'])
             elif KPI_type == Scenario.PerformanceIndicator.KILL_COUNT:
-                KPI = array_mean(self.buffers['frames_alive'])
+                KPI = array_mean(self.buffers['kill_count'])
             else:
                 print(f'KPI type {KPI_type} unimplemented')
                 KPI = np.nan

@@ -90,3 +90,13 @@ def array_mean(values: List[float]) -> ndarray:
 def join_stats(stats_file: TextIO, new_stats: Dict[str, float], metrics_to_rewrite: List[str]) -> Dict[str, float]:
     return {key: new_stats[key] if key in metrics_to_rewrite else value + new_stats[key]
             for key, value in json.load(stats_file).items()}
+
+
+def ensure_directory(file_path: str) -> None:
+    """
+    Create the directory of the file if it does not exist
+    :param file_path: Path to the file
+    """
+    directory = '/'.join(file_path.split('/')[:-1])
+    if not os.path.exists(directory):
+        os.mkdir(directory)

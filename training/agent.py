@@ -11,7 +11,7 @@ from typing import Tuple, List, Callable
 
 from memory import ExperienceReplay
 from model import dueling_dqn, drqn, value_distribution_network, dfp_network
-from util import next_model_path, latest_model_path
+from util import next_model_path, latest_model_path, ensure_directory
 
 
 class Agent:
@@ -141,6 +141,7 @@ class Agent:
         """
         path = next_model_path(self.model_path)
         print(f"Saving model {path.split('/')[-1]}")
+        ensure_directory(self.model_path)
         with self.lock:
             self.target_model.save_weights(path)
 

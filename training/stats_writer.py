@@ -7,7 +7,7 @@ import os
 
 from agent import Agent
 from scenario import Scenario
-from util import array_mean, join_stats
+from util import array_mean, join_stats, ensure_directory
 
 
 class State(Enum):
@@ -81,11 +81,7 @@ class Statistics:
         stats_exist = os.path.exists(file_path)
         # print(f'Append: {append}, Stats exist: {stats_exist}')
         io_mode = 'r+' if stats_exist and self.append else 'w'
-
-        # Create the statistics directory if it doesn't exist
-        directory = '/'.join(file_path.split('/')[:-1])
-        if not os.path.exists(directory):
-            os.mkdir(directory)
+        ensure_directory(file_path)
 
         with open(file_path, io_mode) as stats_file:
             stats = join_stats(stats_file, new_stats, ['episodes', 'total_duration']) \

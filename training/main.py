@@ -170,10 +170,14 @@ if __name__ == "__main__":
     lock = Lock()
 
     # Determine the model
+    if args.algorithm.upper() not in Algorithm._member_names_:
+        raise ValueError(f'Unknown algorithm provided: `{args.algorithm}`')
     alg_name = args.algorithm.lower()
     algorithm = Algorithm[alg_name.upper()]
 
-    # Find the scenario
+    # Determine the scenario
+    if args.scenario.upper() not in Scenario._member_names_:
+        raise ValueError(f'Unknown scenario provided: `{args.scenario}`')
     scenario_class = Scenario[args.scenario.upper()].value
 
     # Instantiate a scenario for every task

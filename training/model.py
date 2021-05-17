@@ -1,5 +1,3 @@
-from enum import Enum, auto
-
 from tensorflow.keras import backend as K
 from tensorflow.keras.initializers import he_uniform
 from tensorflow.keras.layers import BatchNormalization, Activation, Masking, Embedding, RepeatVector
@@ -19,7 +17,6 @@ def build_base_cnn(input_shape: Tuple[int]) -> Tuple:
     return input_layer, x
 
 
-# Model from https://flyyufelix.github.io/2017/10/12/dqn-vs-pg.html
 def dueling_dqn(input_shape: Tuple[int], action_size: int, learning_rate: float) -> Model:
     state_input, x = build_base_cnn(input_shape)
 
@@ -42,7 +39,6 @@ def dueling_dqn(input_shape: Tuple[int], action_size: int, learning_rate: float)
     return model
 
 
-# Model from https://github.com/itaicaspi/keras-dqn-doom/blob/master/main.py
 def dueling_drqn(input_shape: Tuple[int], action_size: int, learning_rate: float) -> Model:
     max_action_sequence_length = 5
     input_action_space_size = action_size + 2
@@ -86,7 +82,6 @@ def dueling_drqn(input_shape: Tuple[int], action_size: int, learning_rate: float
     return model
 
 
-# Model from https://flyyufelix.github.io/2017/10/12/dqn-vs-pg.html
 def value_distribution_network(input_shape: Tuple[int], action_size: int, learning_rate: float, num_atoms = 51) -> Model:
     """Model Value Distribution
     With States as inputs and output Probability Distributions for all Actions
@@ -103,7 +98,6 @@ def value_distribution_network(input_shape: Tuple[int], action_size: int, learni
     return model
 
 
-# Model from https://flyyufelix.github.io/2017/10/12/dqn-vs-pg.html
 def drqn(input_shape: Tuple[int], action_size: int, learning_rate: float) -> Model:
     model = Sequential()
     model.add(TimeDistributed(Conv2D(32, (8, 8), strides = (4, 4), activation = 'elu'), input_shape = input_shape))
@@ -116,7 +110,6 @@ def drqn(input_shape: Tuple[int], action_size: int, learning_rate: float) -> Mod
     return model
 
 
-# Model from https://flyyufelix.github.io/2017/10/12/dqn-vs-pg.html
 def reinforce(input_shape: Tuple[int], action_size: int, learning_rate: float) -> Model:
     model = Sequential()
     model.add(Conv2D(32, 8, 8, strides = (4, 4), input_shape = input_shape))
@@ -140,7 +133,6 @@ def reinforce(input_shape: Tuple[int], action_size: int, learning_rate: float) -
     return model
 
 
-# Model from https://github.com/flyyufelix/Direct-Future-Prediction-Keras
 def dfp_network(input_shape: Tuple[int], action_size: int, learning_rate: float, measurement_size = 3, n_timesteps = 6) -> Model:
     """
     Neural Network for Direct Future Prediction (DFP)

@@ -1,7 +1,7 @@
 from collections import deque
-from aenum import Enum, auto, extend_enum
 
 import numpy as np
+from aenum import Enum, auto, extend_enum
 from scipy.spatial import distance
 from typing import Dict, List
 from vizdoom import ScreenResolution, DoomGame
@@ -14,7 +14,7 @@ class Scenario:
         FRAMES_ALIVE = auto()
         KILL_COUNT = auto()
 
-    class SubTask(Enum):
+    class Task(Enum):
         DEFAULT = auto()
 
     def __init__(self,
@@ -53,7 +53,7 @@ class Scenario:
 
         # Include the available tasks to the enum
         for task in self.task_list:
-            extend_enum(Scenario.SubTask, task, auto())
+            extend_enum(Scenario.Task, task, auto())
 
     @property
     def stats_path(self) -> str:
@@ -135,7 +135,8 @@ class DefendTheCenter(Scenario):
 
     @property
     def task_list(self) -> List[str]:
-        return ['GORE', 'STONE_WALL', 'FAST_ENEMIES', 'MOSSY_BRICKS', 'FUZZY_ENEMIES', 'FLYING_ENEMIES', 'RESIZED_ENEMIES']
+        return ['GORE', 'STONE_WALL', 'FAST_ENEMIES', 'MOSSY_BRICKS', 'FUZZY_ENEMIES', 'FLYING_ENEMIES',
+                'RESIZED_ENEMIES']
 
     @property
     def statistics_fields(self) -> []:
@@ -173,15 +174,6 @@ class DTCGameVariable(Enum):
 
 
 class HealthGathering(Scenario):
-    class SubTask(Scenario.SubTask, Enum):
-        LAVA = auto()
-        DEFAULT = auto()
-        SUPREME = auto()
-        OBSTACLES = auto()
-        STIMPACKS = auto()
-        SHADED_KITS = auto()
-        RESIZED_KITS = auto()
-        STIMPACKS_POISON = auto()
 
     def __init__(self, root_dir: str, task: str, trained_task: str,
                  window_visible: bool, n_tasks: int, render_hud: bool, name_addition: str):
@@ -189,6 +181,11 @@ class HealthGathering(Scenario):
                          render_hud, name_addition)
         self.health_kits = 0
         self.poison = 0
+
+    @property
+    def task_list(self) -> List[str]:
+        return ['DEFAULT', 'LAVA', 'SLIME', 'SUPREME', 'POISON', 'OBSTACLES', 'STIMPACKS', 'SHADED_KITS',
+                'RESIZED_KITS', 'STIMPACKS_POISON', 'SUPREME_POISON']
 
     @property
     def statistics_fields(self) -> []:
@@ -214,22 +211,16 @@ class HealthGathering(Scenario):
 
 
 class SeekAndKill(Scenario):
-    class SubTask(Enum):
-        RED = auto()
-        BLUE = auto()
-        MULTI = auto()
-        SHADOWS = auto()
-        DEFAULT = auto()
-        OBSTACLES = auto()
-        INVULNERABLE = auto()
-        MIXED_ENEMIES = auto()
-        RESIZED_ENEMIES = auto()
 
     def __init__(self, root_dir: str, task: str, trained_task: str,
                  window_visible: bool, n_tasks: int, render_hud: bool, name_addition: str):
         super().__init__('seek_and_kill', root_dir, task, trained_task, window_visible, n_tasks,
                          render_hud, name_addition)
         self.max_velocity = -np.inf
+
+    @property
+    def task_list(self) -> List[str]:
+        return ['DEFAULT', 'RED', 'BLUE', 'SHADOWS', 'OBSTACLES', 'INVULNERABLE', 'MIXED_ENEMIES', 'RESIZED_ENEMIES']
 
     @property
     def statistics_fields(self) -> []:
@@ -278,20 +269,15 @@ class SKGameVariable(Enum):
 
 
 class DodgeProjectiles(Scenario):
-    class SubTask(Enum):
-        BARONS = auto()
-        DEFAULT = auto()
-        MANCUBUS = auto()
-        ROCK_RED = auto()
-        REVENANTS = auto()
-        CACODEMONS = auto()
-        TALL_AGENT = auto()
-        ARACHNOTRON = auto()
 
     def __init__(self, root_dir: str, task: str, trained_task: str,
                  window_visible: bool, n_tasks: int, render_hud: bool, name_addition: str):
         super().__init__('dodge_projectiles', root_dir, task, trained_task, window_visible, n_tasks,
                          render_hud, name_addition)
+
+    @property
+    def task_list(self) -> List[str]:
+        return ['BARONS', 'DEFAULT', 'MANCUBUS', 'ROCK_RED', 'REVENANTS', 'CACODEMONS', 'TALL_AGENT', 'ARACHNOTRON']
 
     def shape_reward(self, reward: float, game_variables: deque) -> float:
         if len(game_variables) < 2:

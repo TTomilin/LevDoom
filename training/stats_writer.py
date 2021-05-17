@@ -7,7 +7,7 @@ import os
 
 from agent import Agent
 from scenario import Scenario
-from utils import array_mean, join_stats
+from util import array_mean, join_stats
 
 
 class State(Enum):

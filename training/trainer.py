@@ -1,7 +1,6 @@
 import logging
-
 import numpy as np
-from time import sleep
+from time import sleep, time
 
 from agent import Agent
 
@@ -42,6 +41,7 @@ class AsynchronousTrainer:
         Q_values = []
         losses = []
         train_iteration = 0
+        start_time = time()
 
         while True:
             train_iteration += 1
@@ -61,9 +61,10 @@ class AsynchronousTrainer:
 
             # Print mean Q_max & mean loss
             if not train_iteration % self.train_report_freq:
-                print(f'Training Report / Iteration {train_iteration} / Mean Q_max: {np.mean(Q_values):.2f} / Mean Loss: {np.mean(losses):.5f}')
+                print(f'Training Report / Iteration {train_iteration} / Time Per Iteration: {(time() - start_time) / self.train_report_freq:.2f}s / Mean Q_max: {np.mean(Q_values):.2f} / Mean Loss: {np.mean(losses):.5f}')
                 Q_values = []
                 losses = []
+                start_time = time()
 
             # Store the weights of the model after [model_save_freq] iterations
             if not train_iteration % self.model_save_freq:

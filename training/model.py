@@ -10,22 +10,6 @@ from tensorflow.keras.optimizers import Adam
 from typing import Tuple
 
 
-class ModelVersion:
-    def __init__(self, version = 0):
-        self.version = version
-
-
-class Algorithm(Enum):
-    DFP = auto()
-    DQN = auto()
-    DRQN = auto()
-    DDRQN = auto()
-    C51_DDQN = auto()
-    REINFORCE = auto()
-    DUELING_DDQN = auto()
-    DUELING_DDRQN = auto()
-
-
 def build_base_cnn(input_shape: Tuple[int]) -> Tuple:
     input_layer = Input(shape = input_shape)
     x = Conv2D(32, (8, 8), strides = (4, 4), activation = 'relu', kernel_initializer = he_uniform())(input_layer)

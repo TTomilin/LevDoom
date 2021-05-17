@@ -16,12 +16,12 @@
 /models/
 /plots/
 /statistics/
-/src/examples/
-/src/utils/convnet_fig.png
-/src/training/c51_ddqn.py
-/src/training/dfp.py
-/src/training/drqn.py
-/src/utils/plot_statistics.py
+/examples/
+/utils/convnet_fig.png
+/training/c51_ddqn.py
+/training/dfp.py
+/training/drqn.py
+/utils/plot_statistics.py
 /.idea
 
 # Byte-compiled / optimized / DLL files

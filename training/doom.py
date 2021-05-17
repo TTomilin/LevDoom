@@ -10,7 +10,7 @@ from threading import get_ident
 from agent import Agent
 from scenario import Scenario
 from stats_writer import Statistics
-from utils import new_episode, idx_to_action
+from util import new_episode, idx_to_action
 
 
 class Doom:
@@ -35,9 +35,9 @@ class Doom:
         game.init()
         game.new_episode()
         game_state = game.get_state()
-        game_variables = deque(maxlen = scenario.len_vars_history)
+        game_variables = deque(maxlen = scenario.variable_history_size)
         game_variables.append(game_state.game_variables)
-    
+
         spawn_point_counter = {}
     
         # Create statistics manager
@@ -49,19 +49,10 @@ class Doom:
     
         current_state = agent.transform_initial_state(game.get_state())
 
-        # Number of health kits and poison pickup as measurements
-        health_kits = 0
-        poison = 0
-
-        improved_epsilon = 1.0  # TODO remove after testing PER
-
-        # Initial normalized measurements
-        measurements = scenario.get_measurements(game_variables, health_kit = health_kits, poison = poison)
+        # Initial normalized measurements for DFP
+        measurements = scenario.get_measurements(game_variables, False)
 
         while n_game < self.max_epochs:
-
-            # With ϵ select a random action atat, otherwise select a = argmaxQ(st,a)
-            improved_epsilon = 0.01 + (1.0 - 0.01) * np.exp(-0.00005 * time_step)
 
             action_idx = agent.get_action(current_state, measurements)
             game.set_action(idx_to_action(action_idx, agent.action_size))
@@ -76,8 +67,7 @@ class Doom:
     
                 # Append statistics
                 statistics.append_episode(n_game, time_step, frames_alive, duration, total_reward, game_variables)
-                # print(f'Improved epsilon {improved_epsilon:.4f}')
-    
+
                 # Reset counters
                 frames_alive, total_reward = 0, 0
                 start_time = time.time()
@@ -94,29 +84,17 @@ class Doom:
     
             new_state = agent.transform_new_state(current_state, new_state)
 
-            if len(game_variables) > 1:
-                current_vars = game_variables[-1]
-                previous_vars = game_variables[-2]
-                if previous_vars[0] - current_vars[0] > 8:  # Pick up Poison
-                    poison += 1
-                if current_vars[0] > previous_vars[0]:  # Pick up Health Pack
-                    health_kits += 1
-    
             reward = scenario.shape_reward(reward, game_variables)
             total_reward += reward
     
             # Save the sample <s, a, r, s', t> to the episode buffer
             if train:
                 agent.memory.add((current_state, action_idx, reward, new_state, measurements, terminated, task_id))
-                measurements = scenario.get_measurements(game_variables, health_kit = health_kits, poison = poison)
+                measurements = scenario.get_measurements(game_variables, terminated)
     
             current_state = new_state
             time_step += 1
 
-            if terminated:
-                health_kits = 0
-                poison = 0
-    
             # Save agent's performance statistics
             if not time_step % statistics.save_frequency:
                 statistics.write(n_game, total_duration)

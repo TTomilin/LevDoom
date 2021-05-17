@@ -95,7 +95,7 @@ class WorldBuilder:
     def __init__(self, wad_path):
         self.wad_path = wad_path
         self.script_path = "../acc158win/SCRIPTS.acs"
-        self.compiler_path = "../../acc158win/acc.exe"
+        self.compiler_path = "../acc158win/acc.exe"
         self.behaviour_path = "../acc158win/BEHAVIOR.lmp"
 
     def swap_monster(self, monster1, monster2):

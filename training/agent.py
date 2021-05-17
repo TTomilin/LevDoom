@@ -1,42 +1,29 @@
-import copy
-import logging
-
 import itertools
+import logging
 import math
-import numpy as np  # Handle matrices
-import random  # Handling random number generation
+import numpy as np
+import random
 import skimage.color
 import skimage.transform
 from numpy import ndarray
 from threading import Lock
-from typing import Tuple
+from typing import Tuple, List, Callable
 
 from memory import ExperienceReplay
-from model import ModelVersion
+from model import dueling_dqn, drqn, value_distribution_network, dfp_network
+from util import next_model_path, latest_model_path
 
 
 class Agent:
-    """ Generic RL Agent
-    Extend this abstract class to define new agents.
-    """
-
-    def __setstate__(self, state):
-        print('Setting Agent state', state)
-        self.__dict__.update(state)
-
-    def __getstate__(self):
-        state = self.__dict__.copy()
-        print('Getting Agent state', state)
-        return state
+    """ Extend this abstract DRL Agent class to define new agents """
 
     def __init__(self,
                  memory: ExperienceReplay,
                  img_dims: tuple,
                  state_size: tuple,
                  action_size: int,
+                 learning_rate: float,
                  model_path: str,
-                 model_version: ModelVersion,
-                 models: [],
                  lock: Lock,
                  observe: int,
                  explore: int,
@@ -44,7 +31,8 @@ class Agent:
                  batch_size: int,
                  frames_per_action: int,
                  update_target_freq: int,
-                 task_priority: bool
+                 task_prioritization: bool,
+                 target_model: bool
                  ):
 
         # Dimensions
@@ -62,6 +50,7 @@ class Agent:
         self.lock = lock
 
         # Learning rate
+        self.learning_rate = learning_rate
         self.gamma = gamma
         self.epsilon = None
 
@@ -69,24 +58,30 @@ class Agent:
         self.update_target_freq = update_target_freq
 
         # Model
-        self.model = models[0]
-        self.target_model = models[1] if len(models) > 1 else None
         self.model_path = model_path
-        self.model_version = model_version
-        self.local_model_version = copy.deepcopy(model_version)
+        self.model = self.network()(state_size, action_size, learning_rate)
+        self.target_model = self.network()(state_size, action_size, learning_rate) if target_model else None
 
         # Memory
         self.memory = memory
-        self.task_priority = task_priority
+        self.task_prioritization = task_prioritization
 
         # Statistics
         self.KPIs = {}
 
+    def network(self) -> Callable:
+        """
+        Implement this method to define the function for creating
+        the network which the implementing agent utilizes
+        :return: The network constructor function
+        """
+        raise NotImplementedError
+
     def transform_initial_state(self, game_state) -> []:
         """
-        Implement this method to return the current state of the game
-        :param game_state: state of the game
-        :return: preprocessed and transformed initial state of the game
+        Implement this method to return the initial state of the game
+        :param game_state: The state of the game represented by frames
+        :return: The preprocessed and transformed initial state of the game
         """
         raise NotImplementedError
 
@@ -116,10 +111,7 @@ class Agent:
         raise NotImplementedError
 
     def update_target_model(self) -> None:
-        """
-        Copy the weights of the online network to the target network
-        :return: None
-        """
+        """ Copy the weights of the online network to the target network """
         print('Updating target model...')
         with self.lock:
             self.target_model.set_weights(self.model.get_weights())
@@ -135,39 +127,29 @@ class Agent:
         return self.preprocess_img(game_state.screen_buffer)
 
     def load_model(self) -> None:
-        """
-        Load the weights from the specified path to both networks
-        :return: None
-        """
-        path = self.latest_model_path()
-        print(f"Loading model {path.split('/')[-1]}...")
+        """ Load the weights from the specified path to all networks """
+        path = latest_model_path(self.model_path)
+        print(f'Loading model {path.split("/")[-1]}')
         self.model.load_weights(path)
-        self.update_target_model()
+        if self.target_model:
+            self.target_model.load_weights(path)
 
     def save_model(self) -> None:
         """
         Save the weights of the target network to the specified path
         Use local model version to prevent multiple threads saving the same model
-        :return: None
         """
-        from utils import next_model_version
-
-        # if self.local_model_version.version < self.model_version.version:
-        #     self.local_model_version.version = self.model_version.version
-        #     return
-        self.model_version.version = next_model_version(self.model_path)
-        path = self.next_model_path()
-        print(f"Saving model {path.split('/')[-1]}...")
+        path = next_model_path(self.model_path)
+        print(f"Saving model {path.split('/')[-1]}")
         with self.lock:
             self.target_model.save_weights(path)
 
-    def latest_model_path(self) -> str:
-        return self.model_path.replace('*', str(self.model_version.version - 1))
-
-    def next_model_path(self) -> str:
-        return self.model_path.replace('*', str(self.model_version.version))
-
     def update_KPI(self, task: str, KPI: float):
+        """
+        Update the Key Performance Indicator for a given task
+        :param task: The task for which to update the metric
+        :param KPI: The new value of the indicator
+        """
         print(f'New KPI for task {task}: {KPI}')
         with self.lock:
             self.KPIs[task] = KPI
@@ -180,9 +162,8 @@ class DRQNAgent(Agent):
                  img_dims: tuple,
                  state_size: tuple,
                  action_size: int,
+                 learning_rate: float,
                  model_path: str,
-                 model_version: ModelVersion,
-                 models: [],
                  lock: Lock = None,
                  observe = 5000,
                  explore = 30000,
@@ -191,11 +172,15 @@ class DRQNAgent(Agent):
                  trace_length = 4,
                  frames_per_action = 4,
                  update_target_freq = 3000,
-                 task_priority = False
+                 task_prioritization = False,
+                 target_model = True
                  ):
-        super().__init__(memory, img_dims, state_size, action_size, model_path, model_version, models, lock,
-                         observe, explore, gamma, batch_size, frames_per_action, update_target_freq, task_priority)
+        super().__init__(memory, img_dims, state_size, action_size, learning_rate, model_path, lock, observe, explore,
+                         gamma, batch_size, frames_per_action, update_target_freq, task_prioritization, target_model)
         self.trace_length = trace_length
+
+    def network(self) -> Callable:
+        return drqn
 
     def transform_initial_state(self, game_state) -> []:
         return self.transform_state(game_state)
@@ -218,9 +203,9 @@ class DRQNAgent(Agent):
         q_values = self.target_model.predict(last_traces)
         return np.argmax(q_values)
 
-    def train(self, time_step) -> Tuple:
+    def train(self, time_step: int) -> Tuple:
         """
-        Train on [batch_size] random samples from experience replay
+        Train on [batch_size] random samples from the experience replay
         :param time_step: the number of performed training iterations
         :return: the maximum Q-value and the training loss
         """
@@ -277,9 +262,8 @@ class DuelingDDQNAgent(Agent):
                  img_dims: tuple,
                  state_size: tuple,
                  action_size: int,
+                 learning_rate: float,
                  model_path: str,
-                 model_version: ModelVersion,
-                 models: [],
                  lock: Lock = None,
                  observe = 5000,
                  explore = 30000,
@@ -287,10 +271,14 @@ class DuelingDDQNAgent(Agent):
                  batch_size = 32,
                  frames_per_action = 4,
                  update_target_freq = 3000,
-                 task_priority = False
+                 task_prioritization = False,
+                 target_model = True
                  ):
-        super().__init__(memory, img_dims, state_size, action_size, model_path, model_version, models, lock,
-                         observe, explore, gamma, batch_size, frames_per_action, update_target_freq, task_priority)
+        super().__init__(memory, img_dims, state_size, action_size, learning_rate, model_path, lock, observe, explore,
+                         gamma, batch_size, frames_per_action, update_target_freq, task_prioritization, target_model)
+
+    def network(self) -> Callable:
+        return dueling_dqn
 
     def transform_initial_state(self, game_state: []) -> []:
         game_state = game_state.screen_buffer
@@ -330,7 +318,6 @@ class DuelingDDQNAgent(Agent):
             except Exception as error:
                 logging.error(f'Failed to get action, retrying in 1s. Reason: {error}')
                 return self.get_action(state, args)
-
 
     def train(self, time_step) -> Tuple:
         """
@@ -389,13 +376,13 @@ class DuelingDDQNAgent(Agent):
 
             target[i][actions[i]] = rewards[i] + terminal * self.gamma * best_action_value
 
-            if self.task_priority:
+            if self.task_prioritization:
                 task = task_ids[i]
                 KPI = self.KPIs[task]
                 sample_weights[i, 0] = max_KPI / KPI
 
         with self.lock:
-            if self.task_priority:
+            if self.task_prioritization:
                 loss = self.model.train_on_batch(states, target, sample_weight = sample_weights)
             else:
                 loss = self.model.train_on_batch(states, target)
@@ -423,9 +410,8 @@ class C51DDQNAgent(DuelingDDQNAgent):
                  img_dims: tuple,
                  state_size: tuple,
                  action_size: int,
+                 learning_rate: float,
                  model_path: str,
-                 model_version: ModelVersion,
-                 models: [],
                  lock: Lock = None,
                  observe = 5000,
                  explore = 30000,
@@ -433,13 +419,14 @@ class C51DDQNAgent(DuelingDDQNAgent):
                  batch_size = 32,
                  frames_per_action = 4,
                  update_target_freq = 3000,
-                 task_priority = False,
+                 task_prioritization = False,
+                 target_model = True,
                  num_atoms = 51,  # C51
                  v_max = 20.4,  # Max possible score for Defend the center is 26 - 0.1*26 - 0.3*10 = 20.4
                  v_min = -6.6,  # Min possible score for Defend the center is -0.1*26 - 1 - 0.3*10 = -6.6
                  ):
-        super().__init__(memory, img_dims, state_size, action_size, model_path, model_version, models, lock,
-                         observe, explore, gamma, batch_size, frames_per_action, update_target_freq, task_priority)
+        super().__init__(memory, img_dims, state_size, learning_rate, action_size, model_path, lock, observe, explore,
+                         gamma, batch_size, frames_per_action, update_target_freq, task_prioritization, target_model)
         # Initialize Atoms
         self.num_atoms = num_atoms
         self.v_max = v_max
@@ -447,14 +434,17 @@ class C51DDQNAgent(DuelingDDQNAgent):
         self.delta_z = (self.v_max - self.v_min) / float(self.num_atoms - 1)
         self.z = [self.v_min + i * self.delta_z for i in range(self.num_atoms)]
 
-    def get_action(self, state: [], *args) -> int:
+    def network(self) -> Callable:
+        return value_distribution_network
+
+    def get_action(self, state: List[float], *args) -> int:
         """
         Get action from model using epsilon-greedy policy
         """
         return random.randrange(self.action_size) if np.random.rand() <= self.epsilon else self.get_optimal_action(
             state)
 
-    def get_optimal_action(self, state: []) -> []:
+    def get_optimal_action(self, state: List[float]) -> ndarray:
         """
         Get optimal action for a state
         """
@@ -527,9 +517,8 @@ class DFPAgent(Agent):
                  img_dims: tuple,
                  state_size: tuple,
                  action_size: int,
+                 learning_rate: float,
                  model_path: str,
-                 model_version: ModelVersion,
-                 models: [],
                  lock: Lock = None,
                  observe = 5000,
                  explore = 30000,
@@ -537,17 +526,20 @@ class DFPAgent(Agent):
                  batch_size = 32,
                  frames_per_action = 4,
                  update_target_freq = 3000,
-                 task_priority = False,
+                 task_prioritization = False,
                  measurement_size = 3,  # [Health, Medkit, Poison]
                  timesteps = [1, 2, 4, 8, 16, 32],
                  ):
-        super().__init__(memory, img_dims, state_size, action_size, model_path, model_version, models, lock,
-                         observe, explore, gamma, batch_size, frames_per_action, update_target_freq, task_priority)
+        super().__init__(memory, img_dims, state_size, action_size, learning_rate, model_path, lock, observe, explore, gamma,
+                         batch_size, frames_per_action, update_target_freq, task_prioritization, False)
         n_timesteps = len(timesteps)
         self.measurement_size = measurement_size
         self.timesteps = timesteps
         self.goal_size = measurement_size * n_timesteps
         self.goal = np.array([1.0, 1.0, -1.0] * n_timesteps)
+
+    def network(self) -> Callable:
+        return dfp_network
 
     def transform_initial_state(self, game_state: []) -> []:
         game_state = game_state.screen_buffer

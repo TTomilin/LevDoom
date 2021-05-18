@@ -140,7 +140,7 @@ class DefendTheCenter(Scenario):
 
     @property
     def task_list(self) -> List[str]:
-        return ['GORE', 'STONE_WALL', 'FAST_ENEMIES', 'MOSSY_BRICKS', 'FUZZY_ENEMIES', 'FLYING_ENEMIES',
+        return ['DFAULT', 'GORE', 'STONE_WALL', 'FAST_ENEMIES', 'MOSSY_BRICKS', 'FUZZY_ENEMIES', 'FLYING_ENEMIES',
                 'RESIZED_ENEMIES']
 
     @property

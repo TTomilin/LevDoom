@@ -52,7 +52,7 @@ class Doom:
     
         current_state = agent.transform_initial_state(game.get_state())
 
-        # Initial normalized measurements for DFP
+        # Initial normalized measurements for Direct Future Prediction (DFP)
         measurements = scenario.get_measurements(game_variables, False)
 
         while n_game < self.max_epochs:
@@ -71,28 +71,30 @@ class Doom:
                 # Append statistics
                 statistics.append_episode(n_game, time_step, frames_alive, duration, total_reward, game_variables)
 
-                # Reset counters
+                # Reset counters and game variables
                 frames_alive, total_reward = 0, 0
                 start_time = time.time()
-    
-                # Restart
-                game.set_seed(self.seed if self.seed else random.randint(0, 1000))
-                new_episode(game, spawn_point_counter, scenario.n_spawn_points)
                 game_variables.clear()
+
+                # Run a new episode. Use a fixed seed if it is provided, otherwise ensure randomness
+                game.set_seed(self.seed if self.seed else np.random.randint(10000))
+                new_episode(game, spawn_point_counter, scenario.n_spawn_points) if self.seed else game.new_episode()
             else:
                 frames_alive += 1
-    
+
+            # Acquire and transform the new state of the game
             new_state = game.get_state()
-            game_variables.append(new_state.game_variables)
-    
             new_state = agent.transform_new_state(current_state, new_state)
 
+            # Determine the reward
+            game_variables.append(new_state.game_variables)
             reward = scenario.shape_reward(reward, game_variables)
             total_reward += reward
     
-            # Save the sample <s, a, r, s', t> to the episode buffer
             if train:
+                # Store the transition <s, a, r, s', t> in the experience replay buffer
                 agent.memory.add((current_state, action_idx, reward, new_state, measurements, terminated, task_id))
+                # Calculate the normalized measurements for Direct Future Prediction (DFP)
                 measurements = scenario.get_measurements(game_variables, terminated)
     
             current_state = new_state
@@ -102,5 +104,5 @@ class Doom:
             if not time_step % statistics.save_frequency:
                 statistics.write(n_game, total_duration)
     
-        # Final statistics
+        # Write the final statistics at the end of the last epoch
         statistics.write(n_game, total_duration)

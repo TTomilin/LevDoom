@@ -100,4 +100,4 @@ def ensure_directory(file_path: str) -> None:
     """
     directory = '/'.join(file_path.split('/')[:-1])
     if not os.path.exists(directory):
-        os.mkdir(directory)
+        os.makedirs(directory)

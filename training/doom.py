@@ -84,10 +84,10 @@ class Doom:
 
             # Acquire and transform the new state of the game
             new_state = game.get_state()
+            game_variables.append(new_state.game_variables)
             new_state = agent.transform_new_state(current_state, new_state)
 
-            # Determine the reward
-            game_variables.append(new_state.game_variables)
+            # Shape the reward
             reward = scenario.shape_reward(reward, game_variables)
             total_reward += reward
     

@@ -85,6 +85,11 @@ class Scenario:
         """ List of the available tasks for the given scenario """
         raise NotImplementedError
 
+    @property
+    def n_spawn_points(self) -> int:
+        """ Number of points the agents can spawn at for the given scenario """
+        raise NotImplementedError
+
     def shape_reward(self, reward: float, game_vars: deque) -> float:
         """
         Override this method to include scenario specific reward shaping
@@ -139,6 +144,10 @@ class DefendTheCenter(Scenario):
                 'RESIZED_ENEMIES']
 
     @property
+    def n_spawn_points(self) -> int:
+        return 1
+
+    @property
     def statistics_fields(self) -> []:
         fields = super().statistics_fields
         fields.extend(['kill_count', 'ammo_left'])
@@ -188,6 +197,10 @@ class HealthGathering(Scenario):
                 'RESIZED_KITS', 'STIMPACKS_POISON', 'SUPREME_POISON']
 
     @property
+    def n_spawn_points(self) -> int:
+        return 1
+
+    @property
     def statistics_fields(self) -> []:
         fields = super().statistics_fields
         fields.extend(['health_found'])
@@ -221,6 +234,10 @@ class SeekAndKill(Scenario):
     @property
     def task_list(self) -> List[str]:
         return ['DEFAULT', 'RED', 'BLUE', 'SHADOWS', 'OBSTACLES', 'INVULNERABLE', 'MIXED_ENEMIES', 'RESIZED_ENEMIES']
+
+    @property
+    def n_spawn_points(self) -> int:
+        return 11
 
     @property
     def statistics_fields(self) -> []:
@@ -278,6 +295,10 @@ class DodgeProjectiles(Scenario):
     @property
     def task_list(self) -> List[str]:
         return ['BARONS', 'DEFAULT', 'MANCUBUS', 'ROCK_RED', 'REVENANTS', 'CACODEMONS', 'TALL_AGENT', 'ARACHNOTRON']
+
+    @property
+    def n_spawn_points(self) -> int:
+        return 1
 
     def shape_reward(self, reward: float, game_variables: deque) -> float:
         if len(game_variables) < 2:

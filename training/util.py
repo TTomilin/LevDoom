@@ -58,7 +58,7 @@ def idx_to_action(action_idx: int, action_size: int) -> []:
     return actions.tolist()
 
 
-def new_episode(game: DoomGame, spawn_point_counter: Dict[int, int]) -> None:
+def new_episode(game: DoomGame, spawn_point_counter: Dict[int, int], n_spawn_points: int) -> None:
     """
     Workaround for improper random number generation with ACS.
 
@@ -69,6 +69,7 @@ def new_episode(game: DoomGame, spawn_point_counter: Dict[int, int]) -> None:
     until one is found with a different id than the most prominent one.
     :param game: The instance of VizDoom
     :param spawn_point_counter: The dict holding the counts of the previous spawn points
+    :param n_spawn_points: Number of spawn points in a given scenario
     """
     while True:
         game.new_episode()
@@ -79,7 +80,7 @@ def new_episode(game: DoomGame, spawn_point_counter: Dict[int, int]) -> None:
             spawn_point_counter[spawn_point] += 1
         else:
             spawn_point_counter[spawn_point] = 0
-        if spawn_point != max(spawn_point_counter, key = spawn_point_counter.get):
+        if spawn_point != max(spawn_point_counter, key = spawn_point_counter.get) and len(spawn_point_counter) == n_spawn_points:
             return
 
 

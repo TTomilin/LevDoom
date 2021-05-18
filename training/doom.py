@@ -15,7 +15,8 @@ from util import new_episode, idx_to_action
 
 class Doom:
     def __init__(self, agent: Agent, scenario: Scenario, stats_save_freq = 5000, max_epochs = 3000,
-                 KPI_update_freq = 10, append_statistics = True, train = True):
+                 KPI_update_freq = 10, append_statistics = True, train = True, seed = None):
+        self.seed = seed
         self.train = train
         self.agent = agent
         self.scenario = scenario
@@ -25,6 +26,8 @@ class Doom:
         self.append_statistics = append_statistics
 
     def play(self) -> None:
+        """ Main RL loop of the game """
+
         train = self.train
         agent = self.agent
         scenario = self.scenario
@@ -73,8 +76,8 @@ class Doom:
                 start_time = time.time()
     
                 # Restart
-                game.set_seed(random.randint(0, 1000))
-                new_episode(game, spawn_point_counter)
+                game.set_seed(self.seed if self.seed else random.randint(0, 1000))
+                new_episode(game, spawn_point_counter, scenario.n_spawn_points)
                 game_variables.clear()
             else:
                 frames_alive += 1

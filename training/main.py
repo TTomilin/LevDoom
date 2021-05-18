@@ -124,7 +124,11 @@ if __name__ == "__main__":
         help = 'List of tasks, e.g., `default gore stone_wall`'
     )
     parser.add_argument(
-        '-m', '--max-epochs', type = int, default = 3000,
+        '--seed', type = int, default = None,
+        help = 'Used to fix the game instance to be deterministic'
+    )
+    parser.add_argument(
+        '-m', '--max-epochs', type = int, default = 10000,
         help = 'Maximum number of time steps per episode'
     )
     parser.add_argument(
@@ -188,7 +192,7 @@ if __name__ == "__main__":
     # Validate input tasks
     scenario = scenarios[0]
     for task in args.tasks:
-        if task not in scenario.task_list:
+        if task.upper() not in scenario.task_list:
             raise ValueError(f'Unknown task provided for scenario {scenario.name}: `{task}`')
 
     # Define the state and action space
@@ -223,7 +227,7 @@ if __name__ == "__main__":
 
     # Create game instances for every task
     games = [Doom(agent, scenario, args.statistics_save_frequency, args.max_epochs, args.KPI_update_frequency,
-                  args.append_statistics, args.train) for scenario in scenarios]
+                  args.append_statistics, args.train, args.seed) for scenario in scenarios]
 
     # Play DOOM
     tasks = [Thread(target = doom.play) for doom in games]

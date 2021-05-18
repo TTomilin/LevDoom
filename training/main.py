@@ -1,21 +1,19 @@
 #!/usr/bin/env python
 from __future__ import print_function
 
+from enum import Enum
+
+import argparse
 import os
-from enum import Enum, auto
-
-from typing import List
-
 import tensorflow as tf
 from threading import Thread, Lock
-import argparse
 
 from agent import DFPAgent, DuelingDDQNAgent, DRQNAgent, C51DDQNAgent
 from doom import Doom
 from memory import ExperienceReplay
 from scenario import HealthGathering, SeekAndKill, DefendTheCenter, DodgeProjectiles
 from trainer import AsynchronousTrainer
-from util import get_input_shape, next_model_version, latest_model_path
+from util import get_input_shape
 
 
 class Algorithm(Enum):
@@ -46,9 +44,19 @@ if __name__ == "__main__":
         help = 'Scale the target weights according to task difficulty calculating the loss'
     )
     parser.add_argument(
-        '--prioritized-replay', type = bool, default = False,
-        help = 'Use PER (Prioritized Experience Reply) for storing and sampling the transitions'
+        '--KPI-update-frequency', type = int, default = 30,
+        help = 'Number of episodes after which to update the Key Performance Indicator of a task for prioritization'
     )
+    parser.add_argument(
+        '--target-update-frequency', type = int, default = 3000,
+        help = 'Number of iterations after which to copy the weights of the online network to the target network'
+    )
+    parser.add_argument(
+        '--frames_per_action', type = int, default = 4,
+        help = 'Frame skip count. Number of frames to stack upon each other as input to the model'
+    )
+
+    # Training arguments
     parser.add_argument(
         '--decay-epsilon', type = str, default = True,
         help = 'Use epsilon decay for exploration'
@@ -73,6 +81,26 @@ if __name__ == "__main__":
         '--KPI-update-frequency', type = int, default = 30,
         help = 'Number of episodes after which to update the Key Performance Indicator of a task for prioritization'
     )
+    parser.add_argument(
+        '--max-train-iterations', type = int, default = 10_000_000,
+        help = 'Maximum iterations of training'
+    )
+    parser.add_argument(
+        '--initial-epsilon', type = float, default = 1.0,
+        help = 'Starting value of epsilon, which represents the probability of exploration'
+    )
+    parser.add_argument(
+        '--final-epsilon', type = float, default = 0.001,
+        help = 'Final value of epsilon, which represents the probability of exploration'
+    )
+    parser.add_argument(
+        '-g', '--gamma', type = float, default = 0.99,
+        help = 'Value of the discount factor for future rewards'
+    )
+    parser.add_argument(
+        '--batch-size', type = int, default = 32,
+        help = 'Number samples in a single training batch'
+    )
 
     # Model arguments
     parser.add_argument(
@@ -89,6 +117,10 @@ if __name__ == "__main__":
     )
 
     # Memory arguments
+    parser.add_argument(
+        '--prioritized-replay', type = bool, default = False,
+        help = 'Use PER (Prioritized Experience Reply) for storing and sampling the transitions'
+    )
     parser.add_argument(
         '--load-experience', type = bool, default = False,
         help = 'Load existing experience into the replay buffer'
@@ -116,11 +148,11 @@ if __name__ == "__main__":
         help = 'Name of the scenario e.g., `defend_the_center` (case-insensitive)'
     )
     parser.add_argument(
-        '-t', '--tasks', nargs="+", default = ['default'],
+        '-t', '--tasks', nargs = "+", default = ['default'],
         help = 'List of tasks, e.g., `default gore stone_wall` (case-insensitive)'
     )
     parser.add_argument(
-        '--trained-task', nargs="+", default = None,
+        '--trained-task', nargs = "+", default = None,
         help = 'List of tasks, e.g., `default gore stone_wall`'
     )
     parser.add_argument(
@@ -129,7 +161,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         '-m', '--max-epochs', type = int, default = 10000,
-        help = 'Maximum number of time steps per episode'
+        help = 'Maximum number of episodes per scenario task'
     )
     parser.add_argument(
         '-v', '--visualize', type = bool, default = False,
@@ -156,6 +188,10 @@ if __name__ == "__main__":
     parser.add_argument(
         '--statistics-save-frequency', type = int, default = 5000,
         help = 'Number of iterations after which to write newly aggregated statistics'
+    )
+    parser.add_argument(
+        '--train-report-frequency', type = int, default = 1000,
+        help = 'Number of iterations after which the training progress is reported'
     )
 
     # Parse the input arguments
@@ -211,7 +247,8 @@ if __name__ == "__main__":
 
     # Create Agent
     agent = algorithm.value(memory, (args.frame_width, args.frame_height), state_size, action_size, args.learning_rate,
-                            model_path, lock, args.observe, task_prioritization = args.task_prioritization)
+                            model_path, lock, args.observe, args.explore, args.gamma, args.batch_size,
+                            args.frames_per_action, args.target_update_freq, args.task_prioritization)
 
     # Load Model
     if args.load_model:
@@ -222,8 +259,9 @@ if __name__ == "__main__":
         agent.memory.load()
 
     # Create Trainer
-    trainer = AsynchronousTrainer(agent, args.decay_epsilon, model_save_freq = args.model_save_frequency,
-                                  memory_update_freq = args.memory_update_frequency)
+    trainer = AsynchronousTrainer(agent, args.decay_epsilon, args.model_save_frequency, args.memory_update_frequency,
+                                  args.train_report_frequency, args.max_train_iterations, args.initial_epsilon,
+                                  args.final_epsilon)
 
     # Create game instances for every task
     games = [Doom(agent, scenario, args.statistics_save_frequency, args.max_epochs, args.KPI_update_frequency,

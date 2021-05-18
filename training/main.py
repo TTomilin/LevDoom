@@ -78,10 +78,6 @@ if __name__ == "__main__":
         help = 'Learning rate of the model optimizer'
     )
     parser.add_argument(
-        '--KPI-update-frequency', type = int, default = 30,
-        help = 'Number of episodes after which to update the Key Performance Indicator of a task for prioritization'
-    )
-    parser.add_argument(
         '--max-train-iterations', type = int, default = 10_000_000,
         help = 'Maximum iterations of training'
     )

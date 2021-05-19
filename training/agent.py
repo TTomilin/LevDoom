@@ -32,7 +32,8 @@ class Agent:
                  frames_per_action: int,
                  update_target_freq: int,
                  task_prioritization: bool,
-                 target_model: bool
+                 target_model: bool,
+                 noisy_nets: bool
                  ):
 
         # Dimensions
@@ -59,8 +60,8 @@ class Agent:
 
         # Model
         self.model_path = model_path
-        self.model = self.network()(state_size, action_size, learning_rate)
-        self.target_model = self.network()(state_size, action_size, learning_rate) if target_model else None
+        self.model = self.network()(state_size, action_size, learning_rate, noisy_nets)
+        self.target_model = self.network()(state_size, action_size, learning_rate, noisy_nets) if target_model else None
 
         # Memory
         self.memory = memory
@@ -174,10 +175,12 @@ class DRQNAgent(Agent):
                  update_target_freq: int,
                  task_prioritization: bool,
                  target_model: bool,
+                 noisy_nets: bool,
                  trace_length = 4
                  ):
         super().__init__(memory, img_dims, state_size, action_size, learning_rate, model_path, lock, observe, explore,
-                         gamma, batch_size, frames_per_action, update_target_freq, task_prioritization, target_model)
+                         gamma, batch_size, frames_per_action, update_target_freq, task_prioritization, target_model,
+                         noisy_nets)
         self.trace_length = trace_length
 
     def network(self) -> Callable:
@@ -273,10 +276,12 @@ class DuelingDDQNAgent(Agent):
                  frames_per_action: int,
                  update_target_freq: int,
                  task_prioritization: bool,
-                 target_model: bool
+                 target_model: bool,
+                 noisy_nets: bool
                  ):
         super().__init__(memory, img_dims, state_size, action_size, learning_rate, model_path, lock, observe, explore,
-                         gamma, batch_size, frames_per_action, update_target_freq, task_prioritization, target_model)
+                         gamma, batch_size, frames_per_action, update_target_freq, task_prioritization, target_model,
+                         noisy_nets)
 
     def network(self) -> Callable:
         return dueling_dqn
@@ -339,7 +344,7 @@ class DuelingDDQNAgent(Agent):
         states = np.zeros(((batch_size,) + self.state_size))
         states_next = np.zeros(((batch_size,) + self.state_size))
         actions, rewards, done, task_ids = [], [], [], []
-        sample_weights = np.empty((batch_size, 1))
+        sample_weights = np.ones((batch_size, 1))
 
         for i in range(self.batch_size):
             states[i, :, :, :] = mini_batch[i][0]
@@ -361,9 +366,6 @@ class DuelingDDQNAgent(Agent):
         # Predict Q-values for the next state using the target network
         target_val = self.target_model.predict(states_next)
 
-        with self.lock:
-            max_KPI = max(self.KPIs.values())
-
         for i in range(batch_size):
             # Terminal state update only receives no future rewards
             terminal = 0 if done[i] else 1
@@ -377,16 +379,16 @@ class DuelingDDQNAgent(Agent):
 
             target[i][actions[i]] = rewards[i] + terminal * self.gamma * best_action_value
 
+            # Obtain the weights of the samples according to task difficulty
             if self.task_prioritization:
                 task = task_ids[i]
                 KPI = self.KPIs[task]
+                with self.lock:
+                    max_KPI = max(self.KPIs.values())
                 sample_weights[i, 0] = max_KPI / KPI
 
         with self.lock:
-            if self.task_prioritization:
-                loss = self.model.train_on_batch(states, target, sample_weight = sample_weights)
-            else:
-                loss = self.model.train_on_batch(states, target)
+            loss = self.model.train_on_batch(states, target, sample_weight = sample_weights)
 
         if self.memory.prioritized:
             # To correct for the bias, use importance sampling weights
@@ -422,12 +424,14 @@ class C51DDQNAgent(DuelingDDQNAgent):
                  update_target_freq: int,
                  task_prioritization: bool,
                  target_model: bool,
+                 noisy_nets: bool,
                  num_atoms = 51,  # C51
                  v_max = 20.4,  # Max possible score for Defend the center is 26 - 0.1*26 - 0.3*10 = 20.4
                  v_min = -6.6,  # Min possible score for Defend the center is -0.1*26 - 1 - 0.3*10 = -6.6
                  ):
         super().__init__(memory, img_dims, state_size, learning_rate, action_size, model_path, lock, observe, explore,
-                         gamma, batch_size, frames_per_action, update_target_freq, task_prioritization, target_model)
+                         gamma, batch_size, frames_per_action, update_target_freq, task_prioritization, target_model,
+                         noisy_nets)
         # Initialize Atoms
         self.num_atoms = num_atoms
         self.v_max = v_max
@@ -528,11 +532,12 @@ class DFPAgent(Agent):
                  frames_per_action: int,
                  update_target_freq: int,
                  task_prioritization: bool,
+                 noisy_nets: bool,
                  measurement_size = 3,  # [Health, Medkit, Poison]
                  timesteps = [1, 2, 4, 8, 16, 32],
                  ):
         super().__init__(memory, img_dims, state_size, action_size, learning_rate, model_path, lock, observe, explore, gamma,
-                         batch_size, frames_per_action, update_target_freq, task_prioritization, False)
+                         batch_size, frames_per_action, update_target_freq, task_prioritization, False, noisy_nets)
         n_timesteps = len(timesteps)
         self.measurement_size = measurement_size
         self.timesteps = timesteps

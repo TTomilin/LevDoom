@@ -115,6 +115,10 @@ if __name__ == "__main__":
         '--model-name-addition', type = str, default = '',
         help = 'An additional identifier to the name of the model. Used to better differentiate stored data'
     )
+    parser.add_argument(
+        '-n', '--noisy-nets', type = bool, default = False,
+        help = 'Inject noise to the parameters of the last Dense layers to promote exploration'
+    )
 
     # Memory arguments
     parser.add_argument(
@@ -254,7 +258,7 @@ if __name__ == "__main__":
     agent = algorithm.value(memory, (args.frame_width, args.frame_height), state_size, action_size, args.learning_rate,
                             model_path, lock, args.observe, args.explore, args.gamma, args.batch_size,
                             args.frames_per_action, args.target_update_frequency, args.task_prioritization,
-                            args.target_model)
+                            args.target_model, args.noisy_nets)
 
     # Load Model
     if args.load_model:

@@ -12,36 +12,32 @@ from typing import Tuple
 BIAS_SIGMA = 0.017  # https://arxiv.org/pdf/1706.10295.pdf
 
 
-def build_base_cnn(input_shape: Tuple[int]) -> Tuple:
+def build_base_cnn(input_shape: Tuple[int], noisy: bool) -> Tuple:
+    conv_layer = NoisyConv2D if noisy else Conv2D
     input_layer = Input(shape = input_shape)
-    x = Conv2D(32, (8, 8), strides = (4, 4), activation = 'relu', kernel_initializer = he_uniform())(input_layer)
-    x = Conv2D(64, (4, 4), strides = (2, 2), activation = 'relu', kernel_initializer = he_uniform())(x)
-    x = Conv2D(64, (3, 3), strides = (1, 1), activation = 'relu', kernel_initializer = he_uniform())(x)
+    x = conv_layer(32, (8, 8), strides = (4, 4), activation = 'relu', kernel_initializer = he_uniform())(input_layer)
+    x = conv_layer(64, (4, 4), strides = (2, 2), activation = 'relu', kernel_initializer = he_uniform())(x)
+    x = conv_layer(64, (3, 3), strides = (1, 1), activation = 'relu', kernel_initializer = he_uniform())(x)
     x = Flatten()(x)
     return input_layer, x
 
 
 def dueling_dqn(input_shape: Tuple[int], action_size: int, learning_rate: float, noisy: bool) -> Model:
-    state_input, x = build_base_cnn(input_shape)
+    # Build the convolutional network section and flatten the output
+    state_input, x = build_base_cnn(input_shape, noisy)
+
+    # Determine the type of the fully collected layer
+    dense_layer = NoisyDense if noisy else Dense
 
     # State value tower - V
-    if noisy:
-        state_value = NoisyDense(256, activation = 'relu', kernel_initializer = he_uniform())(x)
-        state_value = NoisyDense(1, kernel_initializer = he_uniform())(state_value)
-    else:
-        state_value = Dense(256, activation = 'relu', kernel_initializer = he_uniform())(x)
-        state_value = Dense(1, kernel_initializer = he_uniform())(state_value)
+    state_value = dense_layer(256, activation = 'relu', kernel_initializer = he_uniform())(x)
+    state_value = dense_layer(1, kernel_initializer = he_uniform())(state_value)
     state_value = Lambda(lambda s: K.expand_dims(s[:, 0], axis = -1), output_shape = (action_size,))(state_value)
 
     # Action advantage tower - A
-    if noisy:
-        action_advantage = NoisyDense(256, activation = 'relu', kernel_initializer = he_uniform())(x)
-        action_advantage = NoisyDense(action_size, kernel_initializer = he_uniform())(action_advantage)
-    else:
-        action_advantage = Dense(256, activation = 'relu', kernel_initializer = he_uniform())(x)
-        action_advantage = Dense(action_size, kernel_initializer = he_uniform())(action_advantage)
-    action_advantage = Lambda(lambda a: a[:, :] - K.mean(a[:, :], keepdims = True), output_shape = (action_size,))(
-        action_advantage)
+    action_advantage = dense_layer(256, activation = 'relu', kernel_initializer = he_uniform())(x)
+    action_advantage = dense_layer(action_size, kernel_initializer = he_uniform())(action_advantage)
+    action_advantage = Lambda(lambda a: a[:, :] - K.mean(a[:, :], keepdims = True), output_shape = (action_size,))(action_advantage)
 
     # Merge to state-action value function Q
     state_action_value = add([state_value, action_advantage])
@@ -116,14 +112,16 @@ def value_distribution_network(input_shape: Tuple[int], action_size: int, learni
     return model
 
 
-def drqn(input_shape: Tuple[int], action_size: int, learning_rate: float) -> Model:
+def drqn(input_shape: Tuple[int], action_size: int, learning_rate: float, noisy: bool) -> Model:
+    conv_layer = NoisyConv2D if noisy else Conv2D
+    dense_layer = NoisyDense if noisy else Dense
     model = Sequential()
-    model.add(TimeDistributed(Conv2D(32, (8, 8), strides = (4, 4), activation = 'relu'), input_shape = input_shape))
-    model.add(TimeDistributed(Conv2D(64, (4, 4), strides = (2, 2), activation = 'relu')))
-    model.add(TimeDistributed(Conv2D(64, (3, 3), activation = 'relu')))
+    model.add(TimeDistributed(conv_layer(32, (8, 8), strides = (4, 4), activation = 'relu'), input_shape = input_shape))
+    model.add(TimeDistributed(conv_layer(64, (4, 4), strides = (2, 2), activation = 'relu')))
+    model.add(TimeDistributed(conv_layer(64, (3, 3), activation = 'relu')))
     model.add(TimeDistributed(Flatten()))
     model.add(LSTM(512, activation = 'tanh'))  # Use last trace for training
-    model.add(Dense(action_size, activation = 'linear'))
+    model.add(dense_layer(action_size, activation = 'linear'))
     model.compile(loss = Huber(), optimizer = Adam(lr = learning_rate))
     return model
 
@@ -248,3 +246,76 @@ class NoisyDense(Dense):
         if self.activation is not None:
             output = self.activation(output)
         return output
+
+
+class NoisyConv2D(Conv2D):
+    """ In principle identical to the dense layer, only the (filter) kernel and the output have one more dimension """
+
+    def build(self, input_shape):
+        if self.data_format == 'channels_first':
+            channel_axis = 1
+        else:
+            channel_axis = -1
+        if input_shape[channel_axis] is None:
+            raise ValueError('The channel dimension of the inputs '
+                             'should be defined. Found `None`.')
+        self.input_dim = input_shape[channel_axis]
+        self.kernel_shape = self.kernel_size + (self.input_dim, self.filters)
+
+        self.kernel = self.add_weight(shape=self.kernel_shape,
+                                      initializer=self.kernel_initializer,
+                                      name='kernel',
+                                      regularizer=self.kernel_regularizer,
+                                      constraint=self.kernel_constraint)
+
+        self.kernel_sigma = self.add_weight(shape=self.kernel_shape,
+                                      initializer=initializers.Constant(BIAS_SIGMA),
+                                      name='kernel_sigma',
+                                      regularizer=self.kernel_regularizer,
+                                      constraint=self.kernel_constraint)
+
+        if self.use_bias:
+            self.bias = self.add_weight(shape=(self.filters,),
+                                        initializer=self.bias_initializer,
+                                        name='bias',
+                                        regularizer=self.bias_regularizer,
+                                        constraint=self.bias_constraint)
+
+            self.bias_sigma = self.add_weight(shape=(self.filters,),
+                                        initializer=initializers.Constant(BIAS_SIGMA),
+                                        name='bias_sigma',
+                                        regularizer=self.bias_regularizer,
+                                        constraint=self.bias_constraint)
+        else:
+            self.bias = None
+
+        self.input_spec = InputSpec(ndim=self.rank + 2,
+                                    axes={channel_axis: self.input_dim})
+        self.built = True
+
+    def call(self, inputs):
+        # add noise to kernel
+        self.kernel_epsilon = K.random_normal(shape=self.kernel_shape)
+
+        w = self.kernel + math.multiply(self.kernel_sigma, self.kernel_epsilon)
+
+        outputs = K.conv2d(
+            inputs,
+            w,
+            strides=self.strides,
+            padding=self.padding,
+            data_format=self.data_format,
+            dilation_rate=self.dilation_rate)
+
+        if self.use_bias:
+            self.bias_epsilon = K.random_normal(shape=(self.filters,))
+
+            b = self.bias + math.multiply(self.bias_sigma, self.bias_epsilon)
+            outputs = K.bias_add(
+                outputs,
+                b,
+                data_format=self.data_format)
+
+        if self.activation is not None:
+            return self.activation(outputs)
+        return outputs

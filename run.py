@@ -196,17 +196,22 @@ if __name__ == "__main__":
 
     # Parse the input arguments
     args = parser.parse_args()
+    print('Running GVizDoom with the following configuration')
+    for key, val in args.__dict__.items():
+        print(f'{key}: {val}')
 
     # Configure on-demand memory allocation during runtime
     gpu_devices = tf.config.experimental.list_physical_devices('GPU')
-    print(f'Num GPUs Available: {gpu_devices}')
+    print(f'Num GPUs Available: {len(gpu_devices)}')
     for device in gpu_devices:
         tf.config.experimental.set_memory_growth(device, True)
 
     # Find the root directory
     root_dir = os.path.dirname(os.getcwd())
+    if 'vizdoom' not in root_dir:
+        root_dir += '/vizdoom'  # Fix for external script executor
 
-    # Avoid deadlocks when operating on the networks
+    # Avoid deadlocks when operating the networks in multiple threads
     lock = Lock()
 
     # Determine the model

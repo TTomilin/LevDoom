@@ -8,12 +8,12 @@ import os
 import tensorflow as tf
 from threading import Thread, Lock
 
-from agent import DFPAgent, DuelingDDQNAgent, DRQNAgent, C51DDQNAgent
-from doom import Doom
-from memory import ExperienceReplay
-from scenario import HealthGathering, SeekAndKill, DefendTheCenter, DodgeProjectiles
-from trainer import AsynchronousTrainer
-from util import get_input_shape
+from training.agent import DFPAgent, DuelingDDQNAgent, DRQNAgent, C51DDQNAgent
+from training.doom import Doom
+from training.memory import ExperienceReplay
+from training.scenario import HealthGathering, SeekAndKill, DefendTheCenter, DodgeProjectiles
+from training.trainer import AsynchronousTrainer
+from training.util import get_input_shape
 
 
 class Algorithm(Enum):

@@ -9,9 +9,9 @@ from numpy import ndarray
 from threading import Lock
 from typing import Tuple, List, Callable
 
-from memory import ExperienceReplay
-from model import dueling_dqn, drqn, value_distribution_network, dfp_network
-from util import next_model_path, latest_model_path, ensure_directory
+from .memory import ExperienceReplay
+from .model import dueling_dqn, drqn, value_distribution_network, dfp_network
+from .util import next_model_path, latest_model_path, ensure_directory
 
 
 class Agent:

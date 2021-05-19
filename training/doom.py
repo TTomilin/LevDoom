@@ -7,10 +7,10 @@ import numpy as np
 from collections import deque
 from threading import get_ident
 
-from agent import Agent
-from scenario import Scenario
-from stats_writer import Statistics
-from util import new_episode, idx_to_action
+from .agent import Agent
+from .scenario import Scenario
+from .stats_writer import Statistics
+from .util import new_episode, idx_to_action
 
 
 class Doom:

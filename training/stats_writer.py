@@ -5,9 +5,9 @@ import json
 import numpy as np
 import os
 
-from agent import Agent
-from scenario import Scenario
-from util import array_mean, join_stats, ensure_directory
+from .agent import Agent
+from .scenario import Scenario
+from .util import array_mean, join_stats, ensure_directory
 
 
 class State(Enum):

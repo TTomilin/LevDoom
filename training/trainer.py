@@ -2,7 +2,7 @@ import logging
 import numpy as np
 from time import sleep, time
 
-from agent import Agent
+from .agent import Agent
 
 
 class AsynchronousTrainer:

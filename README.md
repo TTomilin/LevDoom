@@ -25,7 +25,7 @@ git clone https://github.com/TTomilin/GVizDoom
 
 ## Command line usage
 
-### Available Commands
+### Available input arguments
 | Argument                    | Default Value   | Description |
 | --------------------------- |:---------------:| ------------------------- |
 | -a --algorithm              | None            | DRL algorithm used to construct the model [DQN, DRQN, Dueling_DDQN, DFP, C51] (case-insensitive)| 
@@ -68,8 +68,13 @@ git clone https://github.com/TTomilin/GVizDoom
 | --train-report-frequency    | 1000            | Number of iterations after which the training progress is reported|
 
 
-#### Example
+#### Examples
+DQN
 ```
-python3 run.py --algorithm dueling_ddqn --scenario defend_the_center \ 
-    --tasks default gore stone_wall --seed 1234
+python3 run.py --algorithm dqn --scenario defend_the_center --tasks default gore stone_wall fast_enemies mossy_bricks fuzzy_enemies flying_enemies resized_enemies --seed 1111
+```
+
+RAINBOW
+```
+python3 run.py --algorithm dueling_ddqn --scenario defend_the_center --tasks default gore stone_wall fast_enemies mossy_bricks fuzzy_enemies flying_enemies resized_enemies --seed 1111 -n True --prioritized-replay True --multi-step 3 --distributional True
 ```

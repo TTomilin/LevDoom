@@ -22,6 +22,33 @@ def build_base_cnn(input_shape: Tuple[int], noisy: bool) -> Tuple:
     return input_layer, x
 
 
+def dqn(input_shape: Tuple[int], action_size: int, learning_rate: float, noisy: bool) -> Model:
+    conv_layer = NoisyConv2D if noisy else Conv2D
+    dense_layer = NoisyDense if noisy else Dense
+    model = Sequential()
+    model.add(conv_layer(32, (8, 8), strides = (4, 4), activation = 'relu', input_shape = input_shape))
+    model.add(conv_layer(64, (4, 4), strides = (2, 2), activation = 'relu'))
+    model.add(conv_layer(64, (3, 3), activation = 'relu'))
+    model.add(Flatten())
+    model.add(dense_layer(action_size, activation = 'linear'))
+    model.compile(loss = Huber(), optimizer = Adam(lr = learning_rate))
+    return model
+
+
+def drqn(input_shape: Tuple[int], action_size: int, learning_rate: float, noisy: bool) -> Model:
+    conv_layer = NoisyConv2D if noisy else Conv2D
+    dense_layer = NoisyDense if noisy else Dense
+    model = Sequential()
+    model.add(TimeDistributed(conv_layer(32, (8, 8), strides = (4, 4), activation = 'relu', input_shape = input_shape)))
+    model.add(TimeDistributed(conv_layer(64, (4, 4), strides = (2, 2), activation = 'relu')))
+    model.add(TimeDistributed(conv_layer(64, (3, 3), activation = 'relu')))
+    model.add(TimeDistributed(Flatten()))
+    model.add(LSTM(512, activation = 'tanh'))  # Use last trace for training
+    model.add(dense_layer(action_size, activation = 'linear'))
+    model.compile(loss = Huber(), optimizer = Adam(lr = learning_rate))
+    return model
+
+
 def dueling_dqn(input_shape: Tuple[int], action_size: int, learning_rate: float, noisy: bool) -> Model:
     # Build the convolutional network section and flatten the output
     state_input, x = build_base_cnn(input_shape, noisy)
@@ -109,20 +136,6 @@ def value_distribution_network(input_shape: Tuple[int], action_size: int, learni
 
     model = Model(inputs = state_input, outputs = distribution_list)
     model.compile(loss = categorical_crossentropy, optimizer = Adam(lr = learning_rate))
-    return model
-
-
-def drqn(input_shape: Tuple[int], action_size: int, learning_rate: float, noisy: bool) -> Model:
-    conv_layer = NoisyConv2D if noisy else Conv2D
-    dense_layer = NoisyDense if noisy else Dense
-    model = Sequential()
-    model.add(TimeDistributed(conv_layer(32, (8, 8), strides = (4, 4), activation = 'relu'), input_shape = input_shape))
-    model.add(TimeDistributed(conv_layer(64, (4, 4), strides = (2, 2), activation = 'relu')))
-    model.add(TimeDistributed(conv_layer(64, (3, 3), activation = 'relu')))
-    model.add(TimeDistributed(Flatten()))
-    model.add(LSTM(512, activation = 'tanh'))  # Use last trace for training
-    model.add(dense_layer(action_size, activation = 'linear'))
-    model.compile(loss = Huber(), optimizer = Adam(lr = learning_rate))
     return model
 
 

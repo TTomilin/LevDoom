@@ -8,7 +8,7 @@ import os
 import tensorflow as tf
 from threading import Thread, Lock
 
-from training.agent import DFPAgent, DuelingDDQNAgent, DRQNAgent, C51DDQNAgent
+from training.agent import DFPAgent, DuelingDDQNAgent, DRQNAgent, C51DDQNAgent, DQNAgent
 from training.doom import Doom
 from training.memory import ExperienceReplay
 from training.scenario import HealthGathering, SeekAndKill, DefendTheCenter, DodgeProjectiles
@@ -18,6 +18,7 @@ from training.util import get_input_shape
 
 class Algorithm(Enum):
     DFP = DFPAgent
+    DQN = DQNAgent
     DRQN = DRQNAgent
     C51_DDQN = C51DDQNAgent
     DUELING_DDQN = DuelingDDQNAgent
@@ -59,6 +60,10 @@ if __name__ == "__main__":
         '--frames_per_action', type = int, default = 4,
         help = 'Frame skip count. Number of frames to stack upon each other as input to the model'
     )
+    parser.add_argument(
+        '--distributional', type = bool, default = False,
+        help = 'Learn to approximate the distribution of returns instead of the expected return'
+    )
 
     # Training arguments
     parser.add_argument(
@@ -99,7 +104,11 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         '--batch-size', type = int, default = 32,
-        help = 'Number samples in a single training batch'
+        help = 'Number of samples in a single training batch'
+    )
+    parser.add_argument(
+        '--multi-step', type = int, default = 1,
+        help = 'Number of steps to aggregate before bootstrapping'
     )
 
     # Model arguments
@@ -143,7 +152,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         '--memory-update_frequency', type = int, default = 5000,
-        help = 'Number of iterations after which to externally store the most recent memory'
+        help = 'Number of iterations after which to externally store the most recent experiences'
     )
 
     # Environment arguments
@@ -275,7 +284,7 @@ if __name__ == "__main__":
 
     # Create game instances for every task
     games = [Doom(agent, scenario, args.statistics_save_frequency, args.max_epochs, args.KPI_update_frequency,
-                  args.append_statistics, args.train, args.seed) for scenario in scenarios]
+                  args.append_statistics, args.train, args.seed, args.multi_step) for scenario in scenarios]
 
     # Play DOOM
     tasks = [Thread(target = doom.play) for doom in games]

@@ -14,11 +14,12 @@ from .util import new_episode, idx_to_action
 
 
 class Doom:
-    def __init__(self, agent: Agent, scenario: Scenario, stats_save_freq = 5000, max_epochs = 3000,
-                 KPI_update_freq = 10, append_statistics = True, train = True, seed = None):
+    def __init__(self, agent: Agent, scenario: Scenario, stats_save_freq: int, max_epochs: int,
+                 KPI_update_freq: int, append_statistics: bool, train: bool, seed: bool, n_steps: int):
         self.seed = seed
         self.train = train
         self.agent = agent
+        self.n_steps = n_steps
         self.scenario = scenario
         self.max_epochs = max_epochs
         self.stats_save_freq = stats_save_freq
@@ -38,8 +39,13 @@ class Doom:
         game.init()
         game.new_episode()
         game_state = game.get_state()
+
+        # Store a fixed length of most recent variables from the game
         game_variables = deque(maxlen = scenario.variable_history_size)
         game_variables.append(game_state.game_variables)
+
+        # Store a fixed length of most recent transitions for multi-step updates
+        transitions = deque(maxlen = self.n_steps)
 
         spawn_point_counter = {}
     

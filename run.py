@@ -221,8 +221,8 @@ if __name__ == "__main__":
 
     # Find the root directory
     root_dir = os.path.dirname(os.getcwd())
-    if 'vizdoom' not in root_dir:
-        root_dir += '/vizdoom'  # Fix for external script executor
+    if 'GVizDoom' not in root_dir:
+        root_dir += '/GVizDoom'  # Fix for external script executor
 
     # Avoid deadlocks when operating the networks in multiple threads
     lock = Lock()

@@ -71,10 +71,13 @@ git clone https://github.com/TTomilin/GVizDoom
 #### Examples
 DQN
 ```
-python3 run.py --algorithm dqn --scenario defend_the_center --tasks default gore stone_wall fast_enemies mossy_bricks fuzzy_enemies flying_enemies resized_enemies --seed 1111
+python3 run.py --algorithm dqn --scenario defend_the_center --tasks default gore stone_wall fast_enemies \
+    mossy_bricks fuzzy_enemies flying_enemies resized_enemies --seed 1111 --model-name-addition _SEED_1111
 ```
 
 RAINBOW
 ```
-python3 run.py --algorithm dueling_ddqn --scenario defend_the_center --tasks default gore stone_wall fast_enemies mossy_bricks fuzzy_enemies flying_enemies resized_enemies --seed 1111 -n True --prioritized-replay True --multi-step 3 --distributional True
+python3 run.py --algorithm dueling_ddqn --scenario defend_the_center --tasks default gore stone_wall \
+    fast_enemies mossy_bricks fuzzy_enemies flying_enemies resized_enemies --seed 1111 \
+    --model-name-addition _SEED_1111 -n True --prioritized-replay True --multi-step 3 --distributional True
 ```

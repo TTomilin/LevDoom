@@ -7,7 +7,7 @@ git clone https://github.com/TTomilin/GVizDoom
 ```
 
 ## Algorithms implemented
-* Dueling-DDQN
+* DQN DRQN Dueling-DQN C51-DQN DFP
 
 ## Scenarios and tasks implemented
 * Defend the Center

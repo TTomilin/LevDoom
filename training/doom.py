@@ -96,15 +96,17 @@ class Doom:
             # Shape the reward
             reward = scenario.shape_reward(reward, game_variables)
             total_reward += reward
+            time_step += 1
     
             if train:
                 # Store the transition <s, a, r, s', t> in the experience replay buffer
-                agent.memory.add((current_state, action_idx, reward, new_state, measurements, terminated, task_id))
+                transitions.append((current_state, action_idx, reward, new_state, measurements, terminated, task_id))
+                if not frames_alive % self.n_steps and frames_alive != 0:
+                    agent.memory.add(np.array(transitions))
                 # Calculate the normalized measurements for Direct Future Prediction (DFP)
                 measurements = scenario.get_measurements(game_variables, terminated)
     
             current_state = new_state
-            time_step += 1
 
             # Save agent's performance statistics
             if not time_step % statistics.save_frequency:

@@ -33,7 +33,8 @@ class Agent:
                  update_target_freq: int,
                  task_prioritization: bool,
                  target_model: bool,
-                 noisy_nets: bool
+                 noisy_nets: bool,
+                 double_dqn: bool
                  ):
 
         # Dimensions
@@ -43,6 +44,7 @@ class Agent:
         self.batch_size = batch_size
 
         # Training
+        self.double_dqn = double_dqn
         self.frames_per_action = frames_per_action
         self.observe = observe  # Collect Experience Replay
         self.explore = explore  # Decay epsilon
@@ -78,7 +80,7 @@ class Agent:
         """
         raise NotImplementedError
 
-    def transform_initial_state(self, game_state) -> []:
+    def transform_initial_state(self, game_state) -> ndarray:
         """
         Implement this method to return the initial state of the game
         :param game_state: The state of the game represented by frames
@@ -86,7 +88,7 @@ class Agent:
         """
         raise NotImplementedError
 
-    def transform_new_state(self, old_state, new_state) -> []:
+    def transform_new_state(self, old_state, new_state) -> ndarray:
         """
         Implement this method to return the next state of the game
         :param old_state: old state of the game
@@ -117,14 +119,14 @@ class Agent:
         with self.lock:
             self.target_model.set_weights(self.model.get_weights())
 
-    def preprocess_img(self, img, size = None):
+    def preprocess_img(self, img, size = None) -> ndarray:
         if size is None:
             size = self.img_dims
         img = np.rollaxis(img, 0, 3)  # (640, 480, 3)
         img = skimage.transform.resize(img, size)  # (64, 64, 3)
         return img
 
-    def transform_state(self, game_state):
+    def transform_state(self, game_state) -> ndarray:
         return self.preprocess_img(game_state.screen_buffer)
 
     def load_model(self) -> None:
@@ -159,39 +161,17 @@ class Agent:
 
 class DQNAgent(Agent):
 
-    def __init__(self,
-                 memory: ExperienceReplay,
-                 img_dims: tuple,
-                 state_size: tuple,
-                 action_size: int,
-                 learning_rate: float,
-                 model_path: str,
-                 lock: Lock,
-                 observe: int,
-                 explore: int,
-                 gamma: float,
-                 batch_size: int,
-                 frames_per_action: int,
-                 update_target_freq: int,
-                 task_prioritization: bool,
-                 target_model: bool,
-                 noisy_nets: bool
-                 ):
-        super().__init__(memory, img_dims, state_size, action_size, learning_rate, model_path, lock, observe, explore,
-                         gamma, batch_size, frames_per_action, update_target_freq, task_prioritization, target_model,
-                         noisy_nets)
-
     def network(self) -> Callable:
         return dqn
 
-    def transform_initial_state(self, game_state: []) -> []:
+    def transform_initial_state(self, game_state: []) -> ndarray:
         game_state = game_state.screen_buffer
         game_state = self.preprocess_img(game_state)
         game_state = np.stack(([game_state] * self.frames_per_action), axis = 2)  # 64x64x4
         game_state = np.expand_dims(game_state, axis = 0)  # 1x64x64x4
         return game_state
 
-    def transform_new_state(self, old_state, new_state) -> []:
+    def transform_new_state(self, old_state, new_state) -> ndarray:
         width, height = self.img_dims
         new_state = new_state.screen_buffer
         new_state = self.preprocess_img(new_state)
@@ -205,25 +185,23 @@ class DQNAgent(Agent):
         img = skimage.color.rgb2gray(img)
         return img
 
-    def get_action(self, state: dict, *args) -> int:
+    def get_action(self, state: ndarray, *args) -> int:
         """
         Retrieve action using epsilon-greedy policy
         :param state: the current observable state that the agent is in
         :return: index of the action with the highest Q-value
         """
-        # return random.randrange(self.action_size) if np.random.rand() <= self.epsilon \
-        #     else np.argmax(self.target_model.predict(state))
         if np.random.rand() <= self.epsilon:
             return random.randrange(self.action_size)
         else:
             try:
                 with self.lock:
-                    return np.argmax(self.target_model.predict(state))
+                    return int(np.argmax(self.target_model.predict(state)))
             except Exception as error:
                 logging.error(f'Failed to get action, retrying in 1s. Reason: {error}')
                 return self.get_action(state, args)
 
-    def train(self, time_step) -> Tuple:
+    def train(self, time_step: int) -> Tuple:
         """
         Train on [batch_size] random samples from experience replay
         :param time_step: the number of performed training iterations
@@ -234,23 +212,28 @@ class DQNAgent(Agent):
         batch_size = self.batch_size if self.memory.prioritized else min(self.batch_size, self.memory.buffer_size)
 
         # Obtain random mini-batch from memory
-        if self.memory.prioritized:
-            tree_idx, mini_batch, IS_weights = self.memory.sample(self.batch_size)
-        else:
-            mini_batch = self.memory.sample(batch_size)
+        tree_idx, mini_batch, IS_weights = self.memory.sample(self.batch_size)
 
+        # Determine the number of aggregated steps for bootstrapping
+        n_steps = mini_batch.shape[1]
+
+        # Create placeholders
         states = np.zeros(((batch_size,) + self.state_size))
-        states_next = np.zeros(((batch_size,) + self.state_size))
+        states_final = np.zeros(((batch_size,) + self.state_size))
         actions, rewards, done, task_ids = [], [], [], []
         sample_weights = np.ones((batch_size, 1))
 
+        # Obtain the transition attributes from the mini-batch
         for i in range(self.batch_size):
-            states[i, :, :, :] = mini_batch[i][0]
-            actions.append(mini_batch[i][1])
-            rewards.append(mini_batch[i][2])
-            states_next[i, :, :, :] = mini_batch[i][3]
-            done.append(mini_batch[i][-2])
-            task_ids.append(mini_batch[i][-1])
+            states[i, :, :, :] = mini_batch[i][0][0]
+            actions.append(mini_batch[i][-1][1])
+            states_final[i, :, :, :] = mini_batch[i][-1][3]
+            done.append(mini_batch[i][-1][-2])
+            task_ids.append(mini_batch[i][0][-1])
+            reward = 0
+            for step in range(n_steps - 1):
+                reward += math.pow(self.gamma, step) * mini_batch[i][step][2]
+            rewards.append(reward)
 
         # Predict Q-values for the current state using the online network
         target = self.model.predict(states)
@@ -258,16 +241,27 @@ class DQNAgent(Agent):
         # Make a copy of the target for prioritized memory replay
         target_old = np.array(target)
 
-        # Predict Q-values for the next state using the target network
-        target_val = self.target_model.predict(states_next)
+        # Predict Q-values for the final state using the online network
+        target_next = self.model.predict(states_final)
+
+        # Predict Q-values for the final state using the target network
+        target_val = self.target_model.predict(states_final)
 
         for i in range(batch_size):
             # Terminal state update receives no future rewards
             terminal = 0 if done[i] else 1
 
-            # Value of the best actions for the next state according to the target network
-            best_action_value = np.max(target_val[i])
-            target[i][actions[i]] = rewards[i] + terminal * self.gamma * best_action_value
+            if self.double_dqn:
+                # Double DQN: Q_max = Q_target(s', argmax_a' Q(s', a'))
+                # Estimate Q-values using the online network
+                best_action = np.argmax(target_next[i])
+                # Select the values with the highest Q-value wrt to the target network
+                best_action_value = target_val[i][best_action]
+            else:
+                # Value of the best actions for the next state according to the target network
+                best_action_value = np.max(target_val[i])
+
+            target[i][actions[i]] = rewards[i] + terminal * math.pow(self.gamma, n_steps) * best_action_value
 
             # Obtain the weights of the samples according to task difficulty
             if self.task_prioritization:
@@ -281,6 +275,10 @@ class DQNAgent(Agent):
             loss = self.model.train_on_batch(states, target, sample_weight = sample_weights)
 
         if self.memory.prioritized:
+            # To correct for the bias, use importance sampling weights
+            # Adjust the updating by reducing the weights of the prominent samples
+            # loss = self.model.train_on_batch(states, target, sample_weight = IS_weights)
+
             # Update priority in the SumTree
             absolute_errors = np.abs(np.mean(target_old - target, axis = 1))
             self.memory.batch_update(tree_idx, absolute_errors)
@@ -292,7 +290,7 @@ class DQNAgent(Agent):
         return np.max(target[-1, -1]), loss
 
 
-class DRQNAgent(Agent):
+class DRQNAgent(DQNAgent):
 
     def __init__(self,
                  memory: ExperienceReplay,
@@ -311,23 +309,24 @@ class DRQNAgent(Agent):
                  task_prioritization: bool,
                  target_model: bool,
                  noisy_nets: bool,
+                 double_dqn: bool,
                  trace_length = 4
                  ):
         super().__init__(memory, img_dims, state_size, action_size, learning_rate, model_path, lock, observe, explore,
                          gamma, batch_size, frames_per_action, update_target_freq, task_prioritization, target_model,
-                         noisy_nets)
+                         noisy_nets, double_dqn)
         self.trace_length = trace_length
 
     def network(self) -> Callable:
         return drqn
 
-    def transform_initial_state(self, game_state) -> []:
+    def transform_initial_state(self, game_state) -> ndarray:
         return self.transform_state(game_state)
 
-    def transform_new_state(self, _, new_state) -> []:
+    def transform_new_state(self, _, new_state) -> ndarray:
         return self.transform_state(new_state)
 
-    def get_action(self, state: dict, *args) -> []:
+    def get_action(self, state: dict, *args) -> int:
         """
         Retrieve action using epsilon-greedy policy
         :param state: the current observable state that the agent is in
@@ -340,7 +339,7 @@ class DRQNAgent(Agent):
         last_traces = np.array([trace[3] for trace in last_traces])  # Take the next state of every trace
         last_traces = np.expand_dims(last_traces, axis = 0)  # 1x4x64x64x3
         q_values = self.target_model.predict(last_traces)
-        return np.argmax(q_values)
+        return int(np.argmax(q_values))
 
     def train(self, time_step: int) -> Tuple:
         """
@@ -374,15 +373,17 @@ class DRQNAgent(Agent):
         target_val = self.target_model.predict(states_next)
 
         for i in range(self.batch_size):
-            # a = np.argmax(target_val[i])
-            # target[i][int(action[i][-1])] = reward[i][-1] + self.gamma * (target_val[i][a])
+            if self.double_dqn:
+                # Double DQN: Q_max = Q_target(s', argmax_a' Q(s', a'))
+                # Estimate Q-values using the online network
+                best_action = np.argmax(target_next[i])
+                # Select the values with the highest Q-value wrt to the target network
+                best_action_value = target_val[i][best_action]
+            else:
+                # Value of the best actions for the next state according to the target network
+                best_action_value = np.max(target_val[i])
 
-            # Current Q-Network selects the action
-            # a'_max = argmax_a' Q(s', a')
-            a = np.argmax(target_next[i])
-            # target Q Network evaluates the action
-            # Q_max = Q_target(s', a'_max)
-            target[i][int(actions[i][-1])] = rewards[i][-1] + self.gamma * (target_val[i][a])
+            target[i][int(actions[i][-1])] = rewards[i][-1] + self.gamma * best_action_value
 
         with self.lock:
             loss = self.model.train_on_batch(states, target)
@@ -394,112 +395,13 @@ class DRQNAgent(Agent):
         return np.max(target[-1, -1]), loss
 
 
-class DuelingDDQNAgent(DQNAgent):
-
-    def __init__(self,
-                 memory: ExperienceReplay,
-                 img_dims: tuple,
-                 state_size: tuple,
-                 action_size: int,
-                 learning_rate: float,
-                 model_path: str,
-                 lock: Lock,
-                 observe: int,
-                 explore: int,
-                 gamma: float,
-                 batch_size: int,
-                 frames_per_action: int,
-                 update_target_freq: int,
-                 task_prioritization: bool,
-                 target_model: bool,
-                 noisy_nets: bool
-                 ):
-        super().__init__(memory, img_dims, state_size, action_size, learning_rate, model_path, lock, observe, explore,
-                         gamma, batch_size, frames_per_action, update_target_freq, task_prioritization, target_model,
-                         noisy_nets)
+class DuelingDQNAgent(DQNAgent):
 
     def network(self) -> Callable:
         return dueling_dqn
 
-    def train(self, time_step) -> Tuple:
-        """
-        Train on [batch_size] random samples from experience replay
-        :param time_step: the number of performed training iterations
-        :return: the maximum Q-value and the training loss
-        """
 
-        # Smaller sample in case of insufficient experiences
-        batch_size = self.batch_size if self.memory.prioritized else min(self.batch_size, self.memory.buffer_size)
-
-        # Obtain random mini-batch from memory
-        if self.memory.prioritized:
-            tree_idx, mini_batch, IS_weights = self.memory.sample(self.batch_size)
-        else:
-            mini_batch = self.memory.sample(batch_size)
-
-        states = np.zeros(((batch_size,) + self.state_size))
-        states_next = np.zeros(((batch_size,) + self.state_size))
-        actions, rewards, done, task_ids = [], [], [], []
-        sample_weights = np.ones((batch_size, 1))
-
-        for i in range(self.batch_size):
-            states[i, :, :, :] = mini_batch[i][0]
-            actions.append(mini_batch[i][1])
-            rewards.append(mini_batch[i][2])
-            states_next[i, :, :, :] = mini_batch[i][3]
-            done.append(mini_batch[i][-2])
-            task_ids.append(mini_batch[i][-1])
-
-        # Predict Q-values for the current state using the online network
-        target = self.model.predict(states)
-
-        # Make a copy of the target for prioritized memory replay
-        target_old = np.array(target)
-
-        # Predict Q-values for the next state using the online network
-        target_next = self.model.predict(states_next)
-
-        # Predict Q-values for the next state using the target network
-        target_val = self.target_model.predict(states_next)
-
-        for i in range(batch_size):
-            # Terminal state update receives no future rewards
-            terminal = 0 if done[i] else 1
-
-            # Double DQN: Q_max = Q_target(s', argmax_a' Q(s', a'))
-            best_action = np.argmax(target_next[i])
-            best_action_value = target_val[i][best_action]
-
-            target[i][actions[i]] = rewards[i] + terminal * self.gamma * best_action_value
-
-            # Obtain the weights of the samples according to task difficulty
-            if self.task_prioritization:
-                task = task_ids[i]
-                KPI = self.KPIs[task]
-                with self.lock:
-                    max_KPI = max(self.KPIs.values())
-                sample_weights[i, 0] = max_KPI / KPI
-
-        with self.lock:
-            loss = self.model.train_on_batch(states, target, sample_weight = sample_weights)
-
-        if self.memory.prioritized:
-            # To correct for the bias, use importance sampling weights
-            # Adjust the updating by reducing the weights of the prominent samples
-            # loss = self.model.train_on_batch(states, target, sample_weight = IS_weights)
-
-            # Update priority in the SumTree
-            absolute_errors = np.abs(np.mean(target_old - target, axis = 1))
-            self.memory.batch_update(tree_idx, absolute_errors)
-
-        # Update the target model to be same with model
-        if not time_step % self.update_target_freq:
-            self.update_target_model()
-
-        return np.max(target[-1, -1]), loss
-
-
-class C51DDQNAgent(DuelingDDQNAgent):
+class C51DQNAgent(DQNAgent):
 
     def __init__(self,
                  memory: ExperienceReplay,
@@ -518,13 +420,14 @@ class C51DDQNAgent(DuelingDDQNAgent):
                  task_prioritization: bool,
                  target_model: bool,
                  noisy_nets: bool,
+                 double_dqn,
                  num_atoms = 51,  # C51
                  v_max = 20.4,  # Max possible score for Defend the center is 26 - 0.1*26 - 0.3*10 = 20.4
                  v_min = -6.6,  # Min possible score for Defend the center is -0.1*26 - 1 - 0.3*10 = -6.6
                  ):
         super().__init__(memory, img_dims, state_size, learning_rate, action_size, model_path, lock, observe, explore,
                          gamma, batch_size, frames_per_action, update_target_freq, task_prioritization, target_model,
-                         noisy_nets)
+                         noisy_nets, double_dqn)
         # Initialize Atoms
         self.num_atoms = num_atoms
         self.v_max = v_max
@@ -626,11 +529,13 @@ class DFPAgent(Agent):
                  update_target_freq: int,
                  task_prioritization: bool,
                  noisy_nets: bool,
+                 double_dqn,
                  measurement_size = 3,  # [Health, Medkit, Poison]
                  timesteps = [1, 2, 4, 8, 16, 32],
                  ):
-        super().__init__(memory, img_dims, state_size, action_size, learning_rate, model_path, lock, observe, explore, gamma,
-                         batch_size, frames_per_action, update_target_freq, task_prioritization, False, noisy_nets)
+        super().__init__(memory, img_dims, state_size, action_size, learning_rate, model_path, lock, observe, explore,
+                         gamma, batch_size, frames_per_action, update_target_freq, task_prioritization, False,
+                         noisy_nets, double_dqn)
         n_timesteps = len(timesteps)
         self.measurement_size = measurement_size
         self.timesteps = timesteps

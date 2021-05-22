@@ -8,7 +8,7 @@ import os
 import tensorflow as tf
 from threading import Thread, Lock
 
-from training.agent import DFPAgent, DuelingDDQNAgent, DRQNAgent, C51DDQNAgent, DQNAgent
+from training.agent import DFPAgent, DuelingDQNAgent, DRQNAgent, C51DQNAgent, DQNAgent
 from training.doom import Doom
 from training.memory import ExperienceReplay
 from training.scenario import HealthGathering, SeekAndKill, DefendTheCenter, DodgeProjectiles
@@ -20,8 +20,8 @@ class Algorithm(Enum):
     DFP = DFPAgent
     DQN = DQNAgent
     DRQN = DRQNAgent
-    C51_DDQN = C51DDQNAgent
-    DUELING_DDQN = DuelingDDQNAgent
+    C51_DQN = C51DQNAgent
+    DUELING_DQN = DuelingDQNAgent
 
 
 class Scenario(Enum):
@@ -63,6 +63,10 @@ if __name__ == "__main__":
     parser.add_argument(
         '--distributional', type = bool, default = False,
         help = 'Learn to approximate the distribution of returns instead of the expected return'
+    )
+    parser.add_argument(
+        '--double-dqn', type = bool, default = False,
+        help = 'Use the online network to predict the actions and the target network to estimate the Q value'
     )
 
     # Training arguments
@@ -267,7 +271,7 @@ if __name__ == "__main__":
     agent = algorithm.value(memory, (args.frame_width, args.frame_height), state_size, action_size, args.learning_rate,
                             model_path, lock, args.observe, args.explore, args.gamma, args.batch_size,
                             args.frames_per_action, args.target_update_frequency, args.task_prioritization,
-                            args.target_model, args.noisy_nets)
+                            args.target_model, args.noisy_nets, args.double_dqn)
 
     # Load Model
     if args.load_model:

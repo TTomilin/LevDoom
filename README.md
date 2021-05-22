@@ -80,7 +80,8 @@ python3 run.py --algorithm dqn --scenario defend_the_center --tasks default gore
 
 RAINBOW
 ```
-python3 run.py --algorithm dueling_ddqn --scenario defend_the_center --tasks default gore stone_wall \
-    fast_enemies mossy_bricks fuzzy_enemies flying_enemies resized_enemies --seed 1111 \
-    --model-name-addition _SEED_1111 -n True --prioritized-replay True --multi-step 3 --distributional True
+python3 run.py --algorithm dueling_dqn --scenario defend_the_center --tasks default gore stone_wall \
+    fast_enemies mossy_bricks fuzzy_enemies flying_enemies resized_enemies --noisy-nets True \
+    --prioritized-replay True --multi-step 3 --distributional True --double-dqn True \
+    --seed 1111 --model-name-addition _SEED_1111 
 ```

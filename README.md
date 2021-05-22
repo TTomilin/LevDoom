@@ -27,45 +27,48 @@ git clone https://github.com/TTomilin/GVizDoom
 
 ### Available input arguments
 | Argument                    | Default Value   | Description |
-| --------------------------- |:---------------:| ------------------------- |
-| -a --algorithm              | None            | DRL algorithm used to construct the model [DQN, DRQN, Dueling_DDQN, DFP, C51] (case-insensitive)| 
-| --task-prioritization       | False           | Scale the target weights according to task difficulty calculating the loss| 
-| --target-model              | True            | Use a target model for stability in learning| 
-| --KPI-update-frequency      | 30              | Number of episodes after which to update the Key Performance Indicator of a task for prioritization| 
-| --target-update-frequency   | 3000            | Number of iterations after which to copy the weights of the online network to the target network| 
-| --frames_per_action         | 4               | Frame skip count. Number of frames to stack upon each other as input to the model| 
-| --decay-epsilon             | True            | Use epsilon decay for exploration| 
-| --train                     | True            | Train or evaluate the agent| 
-| -o --observe                | 10000           | Number of iterations to collect experience before training| 
-| -e --explore                | 50000           | Number of iterations to decay the epsilon for| 
-| --learning-rate             | 0.0001          | Learning rate of the model optimizer| 
-| --max-train-iterations      | 10000000        | Maximum iterations of training| 
-| --initial-epsilon           | 1.0             | Starting value of epsilon, which represents the probability of exploration| 
-| --final-epsilon             | 0.001           | Final value of epsilon, which represents the probability of exploration| 
-| -g --gamma                  | 0.99            | Value of the discount factor for future rewards| 
-| --batch-size                | 32              | Number samples in a single training batch| 
-| --load-model                | False           | Load existing weights or train from scratch| 
-| --model-save-frequency      | 5000            | Number of iterations after which to save a new version of the model| 
-| --model-name-addition       | [Empty String]  | An additional identifier to the name of the model. Used to better differentiate stored data| 
-| -n --noisy-nets             | False           | Inject noise to the parameters of the last Dense layers to promote exploration| 
-| --prioritized-replay        | False           | Use PER (Prioritized Experience Reply for storing and sampling the transitions| 
-| --load-experience           | False           | Load existing experience into the replay buffer| 
-| --save-experience           | False           | Store the gathered experience buffer externally| 
-| --memory-capacity           | 50000           | Number of most recent transitions to store in the replay buffer| 
-| --memory-storage-size       | 5000            | Number of most recent transitions to store externally from the replay buffer if saving is enabled| 
+| --------------------------- |:---------------:| ----------- |
+| -a --algorithm              | None            | DRL algorithm used to construct the model [DQN, DRQN, Dueling_DQN, DFP, C51] (case-insensitive) | 
+| --task-prioritization       | False           | Scale the target weights according to task difficulty calculating the loss | 
+| --target-model              | True            | Use a target model for stability in learning | 
+| --KPI-update-frequency      | 30              | Number of episodes after which to update the Key Performance Indicator of a task for prioritization | 
+| --target-update-frequency   | 3000            | Number of iterations after which to copy the weights of the online network to the target network | 
+| --frames_per_action         | 4               | Frame skip count. Number of frames to stack upon each other as input to the model |
+| --distributional            | False           | Learn to approximate the distribution of returns instead of the expected return |
+| --double-dqn                | False           | Use the online network to predict the actions, and the target network to estimate the Q value |
+| --decay-epsilon             | True            | Use epsilon decay for exploration | 
+| --train                     | True            | Train or evaluate the agent | 
+| -o --observe                | 10000           | Number of iterations to collect experience before training | 
+| -e --explore                | 50000           | Number of iterations to decay the epsilon for | 
+| --learning-rate             | 0.0001          | Learning rate of the model optimizer | 
+| --max-train-iterations      | 10000000        | Maximum iterations of training |
+| --initial-epsilon           | 1.0             | Starting value of epsilon, which represents the probability of exploration | 
+| --final-epsilon             | 0.001           | Final value of epsilon, which represents the probability of exploration | 
+| -g --gamma                  | 0.99            | Value of the discount factor for future rewards | 
+| --batch-size                | 32              | Number samples in a single training batch | 
+| --multi-step                | 1               | Number of steps to aggregate before bootstrapping |
+| --load-model                | False           | Load existing weights or train from scratch | 
+| --model-save-frequency      | 5000            | Number of iterations after which to save a new version of the model | 
+| --model-name-addition       | [Empty String]  | An additional identifier to the name of the model. Used to better differentiate stored data | 
+| -n --noisy-nets             | False           | Inject noise to the parameters of the last Dense layers to promote exploration | 
+| --prioritized-replay        | False           | Use PER (Prioritized Experience Reply for storing and sampling the transitions | 
+| --load-experience           | False           | Load existing experience into the replay buffer | 
+| --save-experience           | False           | Store the gathered experience buffer externally | 
+| --memory-capacity           | 50000           | Number of most recent transitions to store in the replay buffer | 
+| --memory-storage-size       | 5000            | Number of most recent transitions to store externally from the replay buffer if saving is enabled | 
 | --memory-update_frequency   | 5000            | Number of iterations after which to externally store the most recent experiences | 
 | -s --scenario               | None            | Name of the scenario e.g., `defend_the_center` (case-insensitive) | 
 | -t --tasks                  | default         | List of tasks, e.g., `default gore stone_wall` (case-insensitive) | 
 | --trained-task              | None            | Name of the trained model. Used for evaluation | 
-| --seed                      | None            | Used to fix the game instance to be deterministic| 
-| -m --max-epochs             | 10000           | Maximum number of episodes per scenario task| 
-| -v --visualize              | False           | Visualize the interaction of the agent with the environment| 
-| --render-hud                | True            | Render the in-game hud, which displays health, ammo, armour, etc.| 
-| --frame-width               | 84              | Number of pixels to which the width of the frame is scaled down to| 
-| --frame-height              | 84              | Number of pixels to which the height of the frame is scaled down to| 
-| --append-statistics         | True            | Append the rolling statistics to an existing file or overwrite| 
-| --statistics-save-frequency | 5000            | Number of iterations after which to write newly aggregated statistics| 
-| --train-report-frequency    | 1000            | Number of iterations after which the training progress is reported|
+| --seed                      | None            | Used to fix the game instance to be deterministic | 
+| -m --max-epochs             | 10000           | Maximum number of episodes per scenario task | 
+| -v --visualize              | False           | Visualize the interaction of the agent with the environment | 
+| --render-hud                | True            | Render the in-game hud, which displays health, ammo, armour, etc. | 
+| --frame-width               | 84              | Number of pixels to which the width of the frame is scaled down to | 
+| --frame-height              | 84              | Number of pixels to which the height of the frame is scaled down to | 
+| --append-statistics         | True            | Append the rolling statistics to an existing file or overwrite | 
+| --statistics-save-frequency | 5000            | Number of iterations after which to write newly aggregated statistics | 
+| --train-report-frequency    | 1000            | Number of iterations after which the training progress is reported |
 
 
 #### Examples

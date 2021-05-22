@@ -10,7 +10,9 @@ git clone https://github.com/TTomilin/GVizDoom
 * DQN DRQN Dueling-DQN C51-DQN DFP
 
 ## Scenarios and tasks implemented
-* Defend the Center
+### Defend the Center
+#### Train
+* Level 1
   * Default
   * Gore
   * Mossy Bricks
@@ -19,9 +21,21 @@ git clone https://github.com/TTomilin/GVizDoom
   * Fast Enemies
   * Fuzzy Enemies
   * Resized Enemies
-* Health Gathering
-* Seek and Kill
-* Dodge Projectiles
+#### Test
+* Level 2
+  * Gore + Mossy Bricks
+  * Resized Fuzzy Enemies
+  * Stone Wall + Flying Enemies
+* Level 3
+  * Resized Flying Enemies + Mossy Bricks
+  * Gore + Stone Wall + Fuzzy Enemies
+  * Fast Resized Enemies + Gore
+* Level 4
+  * Complete
+  
+#### Health Gathering
+#### Seek and Kill
+#### Dodge Projectiles
 
 ## Command line usage
 
@@ -72,16 +86,22 @@ git clone https://github.com/TTomilin/GVizDoom
 
 
 #### Examples
-DQN
+Train DQN
 ```
 python3 run.py --algorithm dqn --scenario defend_the_center --tasks default gore stone_wall fast_enemies \
     mossy_bricks fuzzy_enemies flying_enemies resized_enemies --seed 1111 --model-name-addition _SEED_1111
 ```
 
-RAINBOW
+Train RAINBOW
 ```
 python3 run.py --algorithm dueling_dqn --scenario defend_the_center --tasks default gore stone_wall \
     fast_enemies mossy_bricks fuzzy_enemies flying_enemies resized_enemies --noisy-nets True \
     --prioritized-replay True --multi-step 3 --distributional True --double-dqn True \
     --seed 1111 --model-name-addition _SEED_1111 
+```
+
+Test Agent
+```
+python3 run.py --algorithm dueling_dqn --scenario defend_the_center --tasks gore_mossy_bricks --train False \
+    --load-model True --decay-epsilon False -observe 0 --max-epochs 100 --trained-model multi_SEED_1111
 ```

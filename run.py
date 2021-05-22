@@ -169,8 +169,8 @@ if __name__ == "__main__":
         help = 'List of tasks, e.g., `default gore stone_wall` (case-insensitive)'
     )
     parser.add_argument(
-        '--trained-task', nargs = "+", default = None,
-        help = 'List of tasks, e.g., `default gore stone_wall`'
+        '--trained-model', type = str, default = None,
+        help = 'Name of the trained model, e.g., `mossy_bricks`'
     )
     parser.add_argument(
         '--seed', type = int, default = None,
@@ -258,7 +258,7 @@ if __name__ == "__main__":
     state_size = get_input_shape(alg_name, args.frame_width, args.frame_height)
 
     # Set the task name as 'multi' if there are multiple tasks, otherwise decide based on training/testing
-    task_name = 'multi' if n_tasks > 1 else args.tasks[0].lower() if args.train else args.trained_task.lower()
+    task_name = 'multi' if n_tasks > 1 else args.tasks[0].lower() if args.train else args.trained_model.lower()
     model_path = f'{root_dir}/models/{alg_name}/{scenario.name}/{task_name}{args.model_name_addition}_v*.h5'
 
     # Instantiate Experience Replay

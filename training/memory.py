@@ -1,3 +1,4 @@
+from numpy import ndarray
 from typing import Tuple, List
 
 import os
@@ -35,38 +36,40 @@ class ExperienceReplay:
         self.save_experience = save
         self.buffer = SumTree(capacity) if prioritized else deque(maxlen = capacity)
 
-    def add(self, experience: Tuple) -> None:
+    def add(self, experiences: ndarray) -> None:
         """
-        Store the transition in a replay buffer
-        Pop the leftmost transitions in case the experience replay capacity is breached
-        :param experience: Transition (<s, a, r, s', t>)
+        Store the transitions of the designated previous n steps in a replay buffer
+        Pop the leftmost transitions as the oldest in case the experience replay capacity is breached
+        In case of prioritized replay find the max priority of the SumTree and add the experiences
+        to the tree buffer with that priority value
+        :param experiences: Numpy array of transitions (<s, a, r, s', t>) of multi_step size
         :return: None
         """
         if not self.prioritized:
             # self.buffer.appendleft(experience)
             # if self.buffer_size > self.capacity:
             #     self.buffer.pop()
-            self.buffer.append(experience)
+            self.buffer.append(experiences)
             if self.buffer_size > self.capacity:
                 self.buffer.popleft()
             return
 
-        # Find the max priority
+        # Find the maximum priority of the tree
         max_priority = np.max(self.buffer.tree[-self.buffer.capacity:])
 
-        # If the max priority = 0 we can't put priority = 0 since this exp will never have a chance to be selected
-        # So we use a minimum priority
+        # Use minimum priority if the priority is 0, otherwise this experience will never have a chance to be selected
         if max_priority == 0:
             max_priority = self.absolute_error_upper
 
-        self.buffer.add(max_priority, experience)  # set the max p for new p
+        # Add the new experience to the tree with the maximum priority
+        self.buffer.add(max_priority, experiences)
 
-    def sample(self, batch_size: int, trace_length = 1):
+    def sample(self, batch_size: int, trace_length = 1) -> Tuple[ndarray, ndarray, ndarray]:
         """
         Sample a batch of transitions from replay buffer
         :param batch_size: size of the sampled batch
         :param trace_length: length of the experience trace
-        :return: tuple of ndarrays with batch_size as first dimension
+        :return: tuple of numpy arrays with batch_size as the first dimension
         """
         if not self.prioritized:
             if trace_length > 1:
@@ -77,21 +80,25 @@ class ExperienceReplay:
                 batch = np.array(batch)
             else:
                 batch = random.sample(self.buffer, batch_size)
+                # Include a specified number of samples from the end of the buffer for better data usage
                 for i in range(self.include_last):
-                    batch[i] = self.buffer[i]
-            return batch
+                    index = -(i + 1)
+                    batch[index] = self.buffer[index]
+            return None, np.array(batch), None
 
         # Create a sample array that will contain the mini-batch
         memory_b = []
 
-        b_idx, b_ISWeights = np.empty((batch_size,), dtype = np.int32), np.empty((batch_size, 1), dtype = np.float32)
+        # Create placeholders for the tree indexes and importance sampling weights
+        b_idx = np.empty((batch_size,), dtype = np.int32)
+        b_ISWeights = np.empty((batch_size, 1), dtype = np.float32)
 
         # Calculate the priority segment
 
         # Divide the Range[0, p_total] into n ranges
         priority_segment = self.buffer.total_priority / batch_size  # Priority segment
 
-        # Increase the PER_b each time a new minibatch is sampled
+        # Increase the PER_b each time a new mini-batch is sampled
         self.PER_b = np.min([1., self.PER_b + self.PER_b_increment])  # Max = 1
 
         # Calculate the max_weight. Set it to a small value to avoid division by zero
@@ -120,7 +127,7 @@ class ExperienceReplay:
 
             memory_b.append(data)
 
-        return b_idx, memory_b, b_ISWeights
+        return b_idx, np.array(memory_b), b_ISWeights
 
     def batch_update(self, tree_idx: np.ndarray, abs_errors: np.ndarray) -> None:
         """

@@ -30,12 +30,11 @@ class Statistics:
             self.buffers[field] = []
 
     def get_state(self, time_step: int) -> State:
-        avg_time_step = time_step / self.scenario.n_tasks
         if self.scenario.trained_task:
             return State.TEST.name.lower()
-        if avg_time_step <= self.agent.observe:
+        if time_step <= self.agent.observe:
             return State.OBSERVE.name.lower()
-        if avg_time_step <= self.agent.observe + self.agent.explore:
+        if time_step <= self.agent.observe + self.agent.explore:
             return State.EXPLORE.name.lower()
         return State.TRAIN.name.lower()
 

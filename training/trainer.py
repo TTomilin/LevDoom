@@ -44,7 +44,7 @@ class AsynchronousTrainer:
         losses = []
         start_time = time()
 
-        for iteration in range(self.train_iterations):
+        for iteration in range(1, self.train_iterations):
 
             # Update epsilon
             if self.agent.epsilon > self.final_epsilon:

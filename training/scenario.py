@@ -141,7 +141,9 @@ class DefendTheCenter(Scenario):
     @property
     def task_list(self) -> List[str]:
         return ['DEFAULT', 'GORE', 'STONE_WALL', 'FAST_ENEMIES', 'MOSSY_BRICKS', 'FUZZY_ENEMIES', 'FLYING_ENEMIES',
-                'RESIZED_ENEMIES']
+                'RESIZED_ENEMIES', 'GORE_MOSSY_BRICKS', 'RESIZED_FUZZY_ENEMIES', 'STONE_WALL_FLYING_ENEMIES',
+                'RESIZED_FLYING_ENEMIES_MOSSY_BRICKS', 'GORE_STONE_WALL_FUZZY_ENEMIES', 'FAST_RESIZED_ENEMIES_GORE',
+                'COMPLETE']
 
     @property
     def n_spawn_points(self) -> int:

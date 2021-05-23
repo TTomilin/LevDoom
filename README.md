@@ -34,6 +34,21 @@ git clone https://github.com/TTomilin/GVizDoom
   * Complete
   
 #### Health Gathering
+#### Train
+* Level 1
+  * Default
+  * Lava 
+  * Slime
+  * Supreme
+  * Poison
+  * Obstacles
+  * Stimpacks 
+  * Shaded Kits
+  * Resized_kits
+#### Test
+* Level 2
+  * Stimpacks + Poison 
+  * Supreme + Poison
 #### Seek and Kill
 #### Dodge Projectiles
 

@@ -244,7 +244,7 @@ if __name__ == "__main__":
 
     # Instantiate a scenario for every task
     n_tasks = len(args.tasks)
-    scenarios = [scenario_class(root_dir, task, args.trained_task, args.visualize, n_tasks, args.render_hud,
+    scenarios = [scenario_class(root_dir, task, args.trained_model, args.visualize, n_tasks, args.render_hud,
                                 args.model_name_addition) for task in args.tasks]
 
     # Validate input tasks

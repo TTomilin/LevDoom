@@ -76,6 +76,7 @@ git clone https://github.com/TTomilin/GVizDoom
 | -g --gamma                  | 0.99            | Value of the discount factor for future rewards | 
 | --batch-size                | 32              | Number samples in a single training batch | 
 | --multi-step                | 1               | Number of steps to aggregate before bootstrapping |
+| --trainer-threads           | 1               | Number of threads used for training the model |
 | --load-model                | False           | Load existing weights or train from scratch | 
 | --model-save-frequency      | 5000            | Number of iterations after which to save a new version of the model | 
 | --model-name-addition       | [Empty String]  | An additional identifier to the name of the model. Used to better differentiate stored data | 
@@ -109,14 +110,15 @@ python3 run.py --algorithm dqn --scenario defend_the_center --tasks default gore
 
 Train RAINBOW
 ```
-python3 run.py --algorithm dueling_dqn --scenario defend_the_center --tasks default gore stone_wall \
+python3 run.py --algorithm dueling_dqn --double-dqn True --scenario defend_the_center --tasks default gore stone_wall \
     fast_enemies mossy_bricks fuzzy_enemies flying_enemies resized_enemies --noisy-nets True \
     --prioritized-replay True --multi-step 3 --distributional True --double-dqn True \
-    --seed 1111 --model-name-addition _SEED_1111 
+    --task-prioritization True --seed 1111 --model-name-addition _SEED_1111 
 ```
 
 Test Agent
 ```
-python3 run.py --algorithm dueling_dqn --scenario defend_the_center --tasks gore_mossy_bricks --train False \
-    --load-model True --decay-epsilon False -observe 0 --max-epochs 100 --trained-model multi_SEED_1111
+python3 run.py --algorithm dueling_dqn --scenario defend_the_center --train False \
+    --tasks gore_mossy_bricks --noisy-nets True --load-model True --observe 0 \
+    --decay-epsilon False --max-epochs 100 --trained-model multi_SEED_1111
 ```

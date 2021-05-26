@@ -130,8 +130,11 @@ class Agent:
         return self.preprocess_img(game_state.screen_buffer)
 
     def load_model(self) -> None:
-        """ Load the weights from the specified path to all networks """
-        path = latest_model_path(self.model_path)
+        """
+        Load the weights from the specified path model to the networks
+        Search for the latest model version if the path contains the wildcard
+        """
+        path = latest_model_path(self.model_path) if '*' in self.model_path else self.model_path
         print(f'Loading model {path.split("/")[-1]}')
         self.model.load_weights(path)
         if self.target_model:

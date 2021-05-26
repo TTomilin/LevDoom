@@ -1,3 +1,5 @@
+import argparse
+
 import json
 from numpy import ndarray
 
@@ -101,3 +103,14 @@ def ensure_directory(file_path: str) -> None:
     directory = '/'.join(file_path.split('/')[:-1])
     if not os.path.exists(directory):
         os.makedirs(directory)
+
+
+def bool_type(arg):
+    if isinstance(arg, bool):
+        return arg
+    elif arg.lower() == 'true':
+        return True
+    elif arg.lower() == 'false':
+        return False
+    else:
+        raise argparse.ArgumentTypeError('Boolean value expected')

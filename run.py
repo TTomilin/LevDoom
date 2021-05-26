@@ -13,7 +13,7 @@ from training.doom import Doom
 from training.memory import ExperienceReplay
 from training.scenario import HealthGathering, SeekAndKill, DefendTheCenter, DodgeProjectiles
 from training.trainer import AsynchronousTrainer
-from training.util import get_input_shape
+from training.util import get_input_shape, bool_type
 
 
 class Algorithm(Enum):
@@ -41,11 +41,11 @@ if __name__ == "__main__":
         help = 'DRL algorithm used to construct the model [DQN, DRQN, Dueling_DDQN, DFP, C51] (case-insensitive)'
     )
     parser.add_argument(
-        '--task-prioritization', type = bool, default = False,
+        '--task-prioritization', type = bool_type, default = False,
         help = 'Scale the target weights according to task difficulty calculating the loss'
     )
     parser.add_argument(
-        '--target-model', type = bool, default = True,
+        '--target-model', type = bool_type, default = True,
         help = 'Use a target model for stability in learning'
     )
     parser.add_argument(
@@ -61,21 +61,21 @@ if __name__ == "__main__":
         help = 'Frame skip count. Number of frames to stack upon each other as input to the model'
     )
     parser.add_argument(
-        '--distributional', type = bool, default = False,
+        '--distributional', type = bool_type, default = False,
         help = 'Learn to approximate the distribution of returns instead of the expected return'
     )
     parser.add_argument(
-        '--double-dqn', type = bool, default = False,
+        '--double-dqn', type = bool_type, default = False,
         help = 'Use the online network to predict the actions and the target network to estimate the Q value'
     )
 
     # Training arguments
     parser.add_argument(
-        '--decay-epsilon', type = str, default = True,
+        '--decay-epsilon', type = bool_type, default = True,
         help = 'Use epsilon decay for exploration'
     )
     parser.add_argument(
-        '--train', type = str, default = True,
+        '--train', type = bool_type, default = True,
         help = 'Train or evaluate the agent'
     )
     parser.add_argument(
@@ -114,10 +114,14 @@ if __name__ == "__main__":
         '--multi-step', type = int, default = 1,
         help = 'Number of steps to aggregate before bootstrapping'
     )
+    parser.add_argument(
+        '--trainer-threads', type = int, default = 1,
+        help = 'Number of threads used for training the model'
+    )
 
     # Model arguments
     parser.add_argument(
-        '--load-model', type = bool, default = False,
+        '--load-model', type = bool_type, default = False,
         help = 'Load existing weights or train from scratch'
     )
     parser.add_argument(
@@ -129,21 +133,21 @@ if __name__ == "__main__":
         help = 'An additional identifier to the name of the model. Used to better differentiate stored data'
     )
     parser.add_argument(
-        '-n', '--noisy-nets', type = bool, default = False,
+        '-n', '--noisy-nets', type = bool_type, default = False,
         help = 'Inject noise to the parameters of the last Dense layers to promote exploration'
     )
 
     # Memory arguments
     parser.add_argument(
-        '--prioritized-replay', type = bool, default = False,
+        '--prioritized-replay', type = bool_type, default = False,
         help = 'Use PER (Prioritized Experience Reply) for storing and sampling the transitions'
     )
     parser.add_argument(
-        '--load-experience', type = bool, default = False,
+        '--load-experience', type = bool_type, default = False,
         help = 'Load existing experience into the replay buffer'
     )
     parser.add_argument(
-        '--save-experience', type = bool, default = False,
+        '--save-experience', type = bool_type, default = False,
         help = 'Store the gathered experience buffer externally'
     )
     parser.add_argument(
@@ -181,11 +185,11 @@ if __name__ == "__main__":
         help = 'Maximum number of episodes per scenario task'
     )
     parser.add_argument(
-        '-v', '--visualize', type = bool, default = False,
+        '-v', '--visualize', type = bool_type, default = False,
         help = 'Visualize the interaction of the agent with the environment'
     )
     parser.add_argument(
-        '--render-hud', type = bool, default = True,
+        '--render-hud', type = bool_type, default = True,
         help = 'Render the in-game hud, which displays health, ammo, armour, etc.'
     )
     parser.add_argument(
@@ -199,7 +203,7 @@ if __name__ == "__main__":
 
     # Statistics arguments
     parser.add_argument(
-        '--append-statistics', type = str, default = True,
+        '--append-statistics', type = str, default = False,
         help = 'Append the rolling statistics to an existing file or overwrite'
     )
     parser.add_argument(
@@ -207,7 +211,7 @@ if __name__ == "__main__":
         help = 'Number of iterations after which to write newly aggregated statistics'
     )
     parser.add_argument(
-        '--train-report-frequency', type = int, default = 1000,
+        '--train-report-frequency', type = int, default = 10,
         help = 'Number of iterations after which the training progress is reported'
     )
 
@@ -258,8 +262,9 @@ if __name__ == "__main__":
     state_size = get_input_shape(alg_name, args.frame_width, args.frame_height)
 
     # Set the task name as 'multi' if there are multiple tasks, otherwise decide based on training/testing
-    task_name = 'multi' if n_tasks > 1 else args.tasks[0].lower() if args.train else args.trained_model.lower()
-    model_path = f'{root_dir}/models/{alg_name}/{scenario.name}/{task_name}{args.model_name_addition}_v*.h5'
+    task_name = 'multi' if n_tasks > 1 else args.tasks[0].lower() if args.train else args.trained_model
+    model_name = args.trained_model if args.load_model else f'{task_name}{args.model_name_addition}_v*'
+    model_path = f'{root_dir}/models/{alg_name}/{scenario.name}/{model_name}.h5'
 
     # Instantiate Experience Replay
     memory_path_addition = scenario.task if n_tasks == 0 else 'shared'
@@ -292,7 +297,7 @@ if __name__ == "__main__":
 
     # Play DOOM
     tasks = [Thread(target = doom.play) for doom in games]
-    trainer_thread = Thread(target = trainer.train)
+    trainers = [Thread(target = trainer.train) for _ in range(args.trainer_threads)]
 
     # Run each task in a separate thread
     for task in tasks:
@@ -300,11 +305,13 @@ if __name__ == "__main__":
 
     # Run the asynchronous trainer
     if args.train:
-        trainer_thread.start()
+        for trainer in trainers:
+            trainer.start()
 
     # Terminate the trainer after the specified maximum training iterations are reached
     if args.train:
-        trainer_thread.join()
+        for trainer in trainers:
+            trainer.join()
 
     # Terminate the doom game instances after the specified maximum epochs are reached
     for task in tasks:

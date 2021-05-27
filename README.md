@@ -47,8 +47,15 @@ git clone https://github.com/TTomilin/GVizDoom
   * Resized_kits
 #### Test
 * Level 2
-  * Stimpacks + Poison 
-  * Supreme + Poison
+  * Slimy Obstacles
+  * Shaded Stimpacks    
+  * Supreme Poison
+* Level 3
+  * Lava + Supreme + Short Agent 
+  * Obstacles + Slime + Stimpacks
+  * Poison + Resized Shaded Kits 
+* Level 4
+  * Complete
 #### Seek and Kill
 #### Dodge Projectiles
 

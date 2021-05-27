@@ -48,7 +48,7 @@ git clone https://github.com/TTomilin/GVizDoom
 #### Test
 * Level 2
   * Slimy Obstacles
-  * Shaded Stimpacks    
+  * Shaded Stimpacks
   * Supreme Poison
 * Level 3
   * Lava + Supreme + Short Agent 

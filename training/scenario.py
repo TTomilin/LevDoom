@@ -195,8 +195,10 @@ class HealthGathering(Scenario):
 
     @property
     def task_list(self) -> List[str]:
-        return ['DEFAULT', 'LAVA', 'SLIME', 'SUPREME', 'POISON', 'OBSTACLES', 'STIMPACKS', 'SHADED_KITS',
-                'RESIZED_KITS', 'STIMPACKS_POISON', 'SUPREME_POISON']
+        return ['DEFAULT', 'LAVA', 'SLIME', 'SUPREME', 'POISON', 'OBSTACLES', 'STIMPACKS', 'SHADED_KITS', 'WATER'
+                'RESIZED_KITS', 'SHORT_AGENT', 'SLIMY_OBSTACLES', 'SHADED_STIMPACKS', 'STIMPACKS_POISON',
+                'RESIZED_KITS_LAVA', 'SUPREME_POISON', 'POISON_RESIZED_SHADED_KITS', 'OBSTACLES_SLIME_STIMPACKS',
+                'LAVA_SUPREME_SHORT_AGENT', 'COMPLETE']
 
     @property
     def n_spawn_points(self) -> int:

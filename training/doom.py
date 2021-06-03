@@ -33,7 +33,7 @@ class Doom:
         agent = self.agent
         scenario = self.scenario
         task_id = scenario.task
-        print(f'Running scenario {task_id}, thread {get_ident()}')
+        print(f'Running {type(agent).__name__} on {scenario.name}, task {task_id}, thread {get_ident()}')
 
         game = scenario.game
         game.init()

@@ -9,6 +9,8 @@ from .agent import Agent
 from .scenario import Scenario
 from .util import array_mean, join_stats, ensure_directory
 
+MIN_KPI = 0.1
+
 
 class State(Enum):
     OBSERVE = auto(),
@@ -64,8 +66,8 @@ class Statistics:
                 KPI = array_mean(self.buffers['kill_count'])
             else:
                 print(f'KPI type {KPI_type} unimplemented')
-                KPI = np.nan
-            self.agent.update_KPI(task_id, KPI)
+                KPI = MIN_KPI
+            self.agent.update_KPI(task_id, max(KPI, MIN_KPI))
 
     def get_statistics(self, n_game: int, total_duration: float):
         stats = {'episodes': n_game, 'total_duration': total_duration}

@@ -258,15 +258,15 @@ class SeekAndKill(Scenario):
         current_coords = [current_vars[SKGameVariable.POSITION_X.value], current_vars[SKGameVariable.POSITION_Y.value]]
         past_coords = [game_variables[0][SKGameVariable.POSITION_X.value],
                        game_variables[0][SKGameVariable.POSITION_Y.value]]
+
+        # Increase reward linearly to the distance the agent has travelled over the past 5 frames
         dist = distance.euclidean(current_coords, past_coords)
-        distance_threshold = 50
+        reward += dist / 500.0
 
         if current_vars[SKGameVariable.HEALTH.value] < previous_vars[SKGameVariable.HEALTH.value]:
             reward -= 0.3  # Loss of HEALTH
         if current_vars[SKGameVariable.AMMO2.value] < previous_vars[SKGameVariable.AMMO2.value]:
             reward -= 0.1  # Loss of AMMO
-        if dist > distance_threshold and len(game_variables) == self.variable_history_size:
-            reward += 0.2  # Encourage movement
 
         return reward
 

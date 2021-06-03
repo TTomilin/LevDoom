@@ -203,7 +203,7 @@ if __name__ == "__main__":
 
     # Statistics arguments
     parser.add_argument(
-        '--append-statistics', type = str, default = False,
+        '--append-statistics', type = bool_type, default = True,
         help = 'Append the rolling statistics to an existing file or overwrite'
     )
     parser.add_argument(
@@ -263,7 +263,7 @@ if __name__ == "__main__":
 
     # Set the task name as 'multi' if there are multiple tasks, otherwise decide based on training/testing
     task_name = 'multi' if n_tasks > 1 else args.tasks[0].lower() if args.train else args.trained_model
-    model_name = args.trained_model if args.load_model else f'{task_name}{args.model_name_addition}_v*'
+    model_name = args.trained_model if args.trained_model is not None else f'{task_name}{args.model_name_addition}_v*'
     model_path = f'{root_dir}/models/{alg_name}/{scenario.name}/{model_name}.h5'
 
     # Instantiate Experience Replay
@@ -287,7 +287,8 @@ if __name__ == "__main__":
         agent.memory.load()
 
     # Create Trainer
-    trainer = AsynchronousTrainer(agent, args.decay_epsilon, args.model_save_frequency, args.memory_update_frequency,
+    decay_epsilon = args.decay_epsilon and not args.noisy_nets
+    trainer = AsynchronousTrainer(agent, decay_epsilon, args.model_save_frequency, args.memory_update_frequency,
                                   args.train_report_frequency, args.max_train_iterations, args.initial_epsilon,
                                   args.final_epsilon)
 

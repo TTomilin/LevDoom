@@ -111,13 +111,13 @@ git clone https://github.com/TTomilin/GVizDoom
 #### Examples
 Train DQN
 ```
-python3 run.py --algorithm dqn --scenario defend_the_center --tasks default gore stone_wall fast_enemies \
+python3 -u run.py --algorithm dqn --scenario defend_the_center --tasks default gore stone_wall fast_enemies \
     mossy_bricks fuzzy_enemies flying_enemies resized_enemies --seed 1111 --model-name-addition _SEED_1111
 ```
 
 Train RAINBOW
 ```
-python3 run.py --algorithm dueling_dqn --double-dqn True --scenario defend_the_center --tasks default gore stone_wall \
+python3 -u run.py --algorithm dueling_dqn --double-dqn True --scenario defend_the_center --tasks default gore stone_wall \
     fast_enemies mossy_bricks fuzzy_enemies flying_enemies resized_enemies --noisy-nets True \
     --prioritized-replay True --multi-step 3 --distributional True --double-dqn True \
     --task-prioritization True --seed 1111 --model-name-addition _SEED_1111 
@@ -125,7 +125,7 @@ python3 run.py --algorithm dueling_dqn --double-dqn True --scenario defend_the_c
 
 Test Agent
 ```
-python3 run.py --algorithm dueling_dqn --scenario defend_the_center --train False \
+python3 -u run.py --algorithm dueling_dqn --scenario defend_the_center --train False \
     --tasks gore_mossy_bricks --noisy-nets True --load-model True --observe 0 \
     --decay-epsilon False --max-epochs 100 --trained-model multi_SEED_1111
 ```

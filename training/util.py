@@ -76,13 +76,14 @@ def new_episode(game: DoomGame, spawn_point_counter: Dict[int, int], n_spawn_poi
     while True:
         game.new_episode()
         spawn_point = game.get_game_variable(GameVariable.USER1)
+        spawn_point %= 21
         if spawn_point == 0 or spawn_point is math.isnan(spawn_point):
             return  # Spawn point undefined
         if spawn_point in spawn_point_counter:
             spawn_point_counter[spawn_point] += 1
         else:
             spawn_point_counter[spawn_point] = 0
-        if spawn_point != max(spawn_point_counter, key = spawn_point_counter.get) and len(spawn_point_counter) == n_spawn_points:
+        if spawn_point != max(spawn_point_counter, key = spawn_point_counter.get) and len(spawn_point_counter) >= n_spawn_points:
             return
 
 

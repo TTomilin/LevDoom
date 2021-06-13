@@ -84,7 +84,7 @@ class Doom:
 
                 # Run a new episode. Use a fixed seed if it is provided, otherwise ensure randomness
                 game.set_seed(self.seed if self.seed else np.random.randint(10000))
-                new_episode(game, spawn_point_counter, scenario.n_spawn_points) if self.seed else game.new_episode()
+                game.new_episode() if self.seed else new_episode(game, spawn_point_counter, scenario.n_spawn_points)
             else:
                 frames_alive += 1
 

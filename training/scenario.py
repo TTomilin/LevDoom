@@ -55,10 +55,9 @@ class Scenario:
         for task in self.task_list:
             extend_enum(Scenario.Task, task, auto())
 
-    @property
-    def stats_path(self) -> str:
+    def get_stats_path(self, model_name) -> str:
         if self.trained_task:
-            sub_folder = f'test/{self.task}/{self.trained_task}'
+            sub_folder = f'test/{self.task}/{model_name}'
         elif self.n_tasks > 1:
             sub_folder = f'multi/{self.name_addition}/{self.task}' if self.name_addition else f'multi/{self.task}'
         else:
@@ -195,7 +194,7 @@ class HealthGathering(Scenario):
 
     @property
     def task_list(self) -> List[str]:
-        return ['DEFAULT', 'LAVA', 'SLIME', 'SUPREME', 'POISON', 'OBSTACLES', 'STIMPACKS', 'SHADED_KITS', 'WATER'
+        return ['DEFAULT', 'LAVA', 'SLIME', 'SUPREME', 'POISON', 'OBSTACLES', 'STIMPACKS', 'SHADED_KITS', 'WATER',
                 'RESIZED_KITS', 'SHORT_AGENT', 'SLIMY_OBSTACLES', 'SHADED_STIMPACKS', 'STIMPACKS_POISON',
                 'RESIZED_KITS_LAVA', 'SUPREME_POISON', 'POISON_RESIZED_SHADED_KITS', 'OBSTACLES_SLIME_STIMPACKS',
                 'LAVA_SUPREME_SHORT_AGENT', 'COMPLETE']
@@ -298,11 +297,11 @@ class DodgeProjectiles(Scenario):
 
     @property
     def task_list(self) -> List[str]:
-        return ['BARONS', 'DEFAULT', 'MANCUBUS', 'ROCK_RED', 'REVENANTS', 'CACODEMONS', 'TALL_AGENT', 'ARACHNOTRON']
+        return ['DEFAULT', 'BARONS', 'MANCUBUS', 'FLAMES', 'CACODEMONS', 'RESIZED_AGENT', 'FLAMING_SKULLS', 'CITY', 'REVENANTS', 'ARACHNOTRON', 'CITY_RESIZED_AGENT', 'BARONS_FLAMING_SKULLS', 'CACODEMONS_FLAMES', 'MANCUBUS_RESIZED_AGENT', 'FLAMES_FLAMING_SKULLS_MANCUBUS', 'RESIZED_AGENT_REVENANTS', 'CITY_ARACHNOTRON', 'COMPLETE']
 
     @property
     def n_spawn_points(self) -> int:
-        return 1
+        return 4
 
     def shape_reward(self, reward: float, game_variables: deque) -> float:
         if len(game_variables) < 2:

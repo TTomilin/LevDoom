@@ -77,8 +77,10 @@ class Statistics:
 
     def write(self, n_game: int, total_duration: float) -> None:
         new_stats = self.get_statistics(n_game, float(np.around(total_duration, decimals = 2)))
-        file_path = self.scenario.stats_path
-        print(f'Updating Statistics {file_path.split("/")[-1]} - {new_stats}')
+        model_name = self.agent.model_path.split("/")[-1].split('.')[0]
+        file_path = self.scenario.get_stats_path(model_name)
+        model_name = file_path.split("/")[-1]
+        print(f'Updating Statistics {model_name} - {new_stats}')
         stats_exist = os.path.exists(file_path)
         # print(f'Append: {append}, Stats exist: {stats_exist}')
         io_mode = 'r+' if stats_exist and self.append else 'w'

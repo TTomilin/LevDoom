@@ -234,8 +234,8 @@ class DQNAgent(Agent):
             done.append(mini_batch[i][-1][-2])
             task_ids.append(mini_batch[i][0][-1])
             reward = 0
-            for step in range(n_steps - 1):
-                reward += math.pow(self.gamma, step) * mini_batch[i][step][2]
+            for step in range(n_steps):
+                reward += math.pow(self.gamma, step + 1) * mini_batch[i][step][2]
             rewards.append(reward)
 
         # Predict Q-values for the current state using the online network

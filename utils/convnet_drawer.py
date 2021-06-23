@@ -24,9 +24,9 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
     POSSIBILITY OF SUCH DAMAGE.
 """
 
-import os
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
+import os
 
 plt.rcdefaults()
 from matplotlib.lines import Line2D
@@ -145,9 +145,9 @@ if __name__ == '__main__':
     # conv layers
     # size_list = [(64, 64), (64, 64), (32, 32), (32, 32), (16, 16), (16, 16), (8, 8)]
     # size_list = [(64, 64), (15, 15), (6, 6), (4, 4)]
-    size_list = [(64, 64), (15, 15), (6, 6), (4, 4)]
+    size_list = [(40, 40), (15, 15), (6, 6), (4, 4)]
     num_list = [3, 32, 64, 64]
-    x_diff_list = [0, layer_width * 3, layer_width * 1.3, layer_width]
+    x_diff_list = [0, layer_width * 2, layer_width * 1.3, layer_width]
     text_list = ['Inputs'] + ['Feature\nmaps'] * (len(size_list) - 1)
     loc_diff_list = [[3, -3]] * len(size_list)
 
@@ -167,7 +167,9 @@ if __name__ == '__main__':
                       num = num_show_list[ind],
                       top_left = top_left_list[ind], loc_diff = loc_diff_list[ind])
         label(top_left_list[ind], text_list[ind] + '\n{}@{}x{}'.format(
-            num_list[ind], size_list[ind][0], size_list[ind][1]))
+            num_list[ind],
+            84 if size_list[ind][0] == 40 else size_list[ind][0],
+            84 if size_list[ind][1] == 40 else size_list[ind][1]))
 
     ############################
     # in between layers
@@ -176,7 +178,7 @@ if __name__ == '__main__':
     end_ratio_list = [[0.4, 0.5], [0.4, 0.8], [0.4, 0.5]]
     patch_size_list = [(8, 8), (4, 4), (3, 3)]
     stride_list = [4, 2, 1]
-    xy_off_list = [[75, -50], [40, -45], [30, -40]]
+    xy_off_list = [[80, -47], [55, -37], [45, -35]]
     ind_bgn_list = range(len(patch_size_list))
     text_list = ['Convolution', 'Convolution', 'Convolution']
 
@@ -187,17 +189,17 @@ if __name__ == '__main__':
             top_left_list, loc_diff_list, num_show_list, size_list)
         label(top_left_list[ind], text_list[ind] + '\n{}x{} kernel\n{} stride'.format(
             patch_size_list[ind][0], patch_size_list[ind][1], stride_list[ind]), xy_off = xy_off_list[ind]
-        )
+              )
 
     ############################
     # fully connected layers
-    size_list = [(fc_unit_size, fc_unit_size)] * 3
-    num_list = [4096, 512, 3]
+    size_list = [(fc_unit_size, fc_unit_size)] * 2
+    num_list = [4096, 3]
     num_show_list = list(map(min, num_list, [NumFcMax] * len(num_list)))
     x_diff_list = [sum(x_diff_list) + layer_width, layer_width, layer_width]
     top_left_list = np.c_[np.cumsum(x_diff_list), np.zeros(len(x_diff_list))]
     loc_diff_list = [[fc_unit_size, -fc_unit_size]] * len(top_left_list)
-    text_list = ['Hidden\nunits'] + ['Memory\nunits'] + ['Outputs']
+    text_list = ['Hidden\nunits'] + ['Outputs']
 
     for ind in range(len(size_list)):
         if flag_omit:
@@ -215,9 +217,9 @@ if __name__ == '__main__':
         label(top_left_list[ind], text_list[ind] + '\n{}'.format(
             num_list[ind]))
 
-    text_list = ['Flatten\n', 'LSTM', 'Fully\nconnected']
+    text_list = ['Flatten\n', 'Fully\nconnected']
 
-    xy_off_list = [[15, -40], [20, -35], [5, -15]]
+    xy_off_list = [[7, -28], [0, -13]]
     for ind in range(len(size_list)):
         label(top_left_list[ind], text_list[ind], xy_off = xy_off_list[ind])
 
@@ -237,7 +239,6 @@ if __name__ == '__main__':
     fig.set_size_inches(16, 5)
     # fig.set_width(100)
 
-    fig_dir = '/'
-    fig_ext = '.png'
-    fig.savefig(os.path.join(fig_dir, 'convnet_fig' + fig_ext),
-                bbox_inches = 'tight', pad_inches = 0, dpi=1200)
+    fig_dir = 'C:\\Users\\trist\\Git\\GVizDoom\\plots'
+    fig.savefig(os.path.join(fig_dir, 'convnet.png'),
+                bbox_inches = 'tight', pad_inches = 0, dpi = 1200)

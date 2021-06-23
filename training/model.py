@@ -23,14 +23,13 @@ def build_base_cnn(input_shape: Tuple[int], noisy: bool) -> Tuple:
 
 
 def dqn(input_shape: Tuple[int], action_size: int, learning_rate: float, noisy: bool) -> Model:
-    conv_layer = NoisyConv2D if noisy else Conv2D
+    # Build the convolutional network section and flatten the output
+    state_input, state_hidden = build_base_cnn(input_shape, noisy)
+
     dense_layer = NoisyDense if noisy else Dense
-    model = Sequential()
-    model.add(conv_layer(32, (8, 8), strides = (4, 4), activation = 'relu', input_shape = input_shape))
-    model.add(conv_layer(64, (4, 4), strides = (2, 2), activation = 'relu'))
-    model.add(conv_layer(64, (3, 3), activation = 'relu'))
-    model.add(Flatten())
-    model.add(dense_layer(action_size, activation = 'linear'))
+    output = dense_layer(action_size, activation = 'linear')(state_hidden)
+
+    model = Model(inputs = state_input, outputs = output)
     model.compile(loss = Huber(), optimizer = Adam(lr = learning_rate))
     return model
 
@@ -64,7 +63,8 @@ def dueling_dqn(input_shape: Tuple[int], action_size: int, learning_rate: float,
     # Action advantage tower - A
     action_advantage = dense_layer(256, activation = 'relu', kernel_initializer = he_uniform())(x)
     action_advantage = dense_layer(action_size, kernel_initializer = he_uniform())(action_advantage)
-    action_advantage = Lambda(lambda a: a[:, :] - K.mean(a[:, :], keepdims = True), output_shape = (action_size,))(action_advantage)
+    action_advantage = Lambda(lambda a: a[:, :] - K.mean(a[:, :], keepdims = True), output_shape = (action_size,))(
+        action_advantage)
 
     # Merge to state-action value function Q
     state_action_value = add([state_value, action_advantage])
@@ -275,59 +275,59 @@ class NoisyConv2D(Conv2D):
         self.input_dim = input_shape[channel_axis]
         self.kernel_shape = self.kernel_size + (self.input_dim, self.filters)
 
-        self.kernel = self.add_weight(shape=self.kernel_shape,
-                                      initializer=self.kernel_initializer,
-                                      name='kernel',
-                                      regularizer=self.kernel_regularizer,
-                                      constraint=self.kernel_constraint)
+        self.kernel = self.add_weight(shape = self.kernel_shape,
+                                      initializer = self.kernel_initializer,
+                                      name = 'kernel',
+                                      regularizer = self.kernel_regularizer,
+                                      constraint = self.kernel_constraint)
 
-        self.kernel_sigma = self.add_weight(shape=self.kernel_shape,
-                                      initializer=initializers.Constant(BIAS_SIGMA),
-                                      name='kernel_sigma',
-                                      regularizer=self.kernel_regularizer,
-                                      constraint=self.kernel_constraint)
+        self.kernel_sigma = self.add_weight(shape = self.kernel_shape,
+                                            initializer = initializers.Constant(BIAS_SIGMA),
+                                            name = 'kernel_sigma',
+                                            regularizer = self.kernel_regularizer,
+                                            constraint = self.kernel_constraint)
 
         if self.use_bias:
-            self.bias = self.add_weight(shape=(self.filters,),
-                                        initializer=self.bias_initializer,
-                                        name='bias',
-                                        regularizer=self.bias_regularizer,
-                                        constraint=self.bias_constraint)
+            self.bias = self.add_weight(shape = (self.filters,),
+                                        initializer = self.bias_initializer,
+                                        name = 'bias',
+                                        regularizer = self.bias_regularizer,
+                                        constraint = self.bias_constraint)
 
-            self.bias_sigma = self.add_weight(shape=(self.filters,),
-                                        initializer=initializers.Constant(BIAS_SIGMA),
-                                        name='bias_sigma',
-                                        regularizer=self.bias_regularizer,
-                                        constraint=self.bias_constraint)
+            self.bias_sigma = self.add_weight(shape = (self.filters,),
+                                              initializer = initializers.Constant(BIAS_SIGMA),
+                                              name = 'bias_sigma',
+                                              regularizer = self.bias_regularizer,
+                                              constraint = self.bias_constraint)
         else:
             self.bias = None
 
-        self.input_spec = InputSpec(ndim=self.rank + 2,
-                                    axes={channel_axis: self.input_dim})
+        self.input_spec = InputSpec(ndim = self.rank + 2,
+                                    axes = {channel_axis: self.input_dim})
         self.built = True
 
     def call(self, inputs):
         # add noise to kernel
-        self.kernel_epsilon = K.random_normal(shape=self.kernel_shape)
+        self.kernel_epsilon = K.random_normal(shape = self.kernel_shape)
 
         w = self.kernel + math.multiply(self.kernel_sigma, self.kernel_epsilon)
 
         outputs = K.conv2d(
             inputs,
             w,
-            strides=self.strides,
-            padding=self.padding,
-            data_format=self.data_format,
-            dilation_rate=self.dilation_rate)
+            strides = self.strides,
+            padding = self.padding,
+            data_format = self.data_format,
+            dilation_rate = self.dilation_rate)
 
         if self.use_bias:
-            self.bias_epsilon = K.random_normal(shape=(self.filters,))
+            self.bias_epsilon = K.random_normal(shape = (self.filters,))
 
             b = self.bias + math.multiply(self.bias_sigma, self.bias_epsilon)
             outputs = K.bias_add(
                 outputs,
                 b,
-                data_format=self.data_format)
+                data_format = self.data_format)
 
         if self.activation is not None:
             return self.activation(outputs)

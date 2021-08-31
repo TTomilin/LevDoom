@@ -1,5 +1,5 @@
 # GVizDoom
-Platform for training generalizable deep reinforcement learning agents
+Benchmark for researching generalization of deep reinforcement learning agents
 
 ## Installation
 ```
@@ -7,11 +7,10 @@ git clone https://github.com/TTomilin/GVizDoom
 ```
 
 ## Algorithms implemented
-* DQN DRQN Dueling-DQN C51-DQN DFP
+* DQN DRQN Rainbow
 
-## Scenarios and tasks implemented
+## Scenarios & Tasks
 ### Defend the Center
-#### Train
 * Level 1
   * Default
   * Gore
@@ -21,20 +20,18 @@ git clone https://github.com/TTomilin/GVizDoom
   * Fast Enemies
   * Fuzzy Enemies
   * Resized Enemies
-#### Test
 * Level 2
   * Gore + Mossy Bricks
-  * Resized Fuzzy Enemies
+  * Resized Enemies + Fuzzy Enemies
   * Stone Wall + Flying Enemies
 * Level 3
-  * Resized Flying Enemies + Mossy Bricks
+  * Resized Enemies + Flying Enemies + Mossy Bricks
   * Gore + Stone Wall + Fuzzy Enemies
-  * Fast Resized Enemies + Gore
+  * Fast Enemies + Resized Enemies + Gore
 * Level 4
   * Complete
   
 #### Health Gathering
-#### Train
 * Level 1
   * Default
   * Lava 
@@ -45,11 +42,10 @@ git clone https://github.com/TTomilin/GVizDoom
   * Stimpacks 
   * Shaded Kits
   * Resized_kits
-#### Test
 * Level 2
-  * Slimy Obstacles
+  * Slime + Obstacles
   * Shaded Stimpacks
-  * Supreme Poison
+  * Supreme + Poison
 * Level 3
   * Lava + Supreme + Short Agent 
   * Obstacles + Slime + Stimpacks
@@ -57,7 +53,53 @@ git clone https://github.com/TTomilin/GVizDoom
 * Level 4
   * Complete
 #### Seek and Kill
+* Level 0
+  * Default
+* Level 1
+  * Red
+  * Blue
+  * Shadows
+  * Obstacles
+  * Invulnerable
+  * Mixed Enemies
+  * Resized Enemies
+* Level 2
+  * Blue + Shadows
+  * Obstacles + Resized Enemies
+  * Red + Mixed Enemies
+  * Invulnerable + Blue
+  * Resized Enemies + Red
+  * Shadows + Obstacles
+* Level 3
+  * Blue + Mixed Enemies + Resized Enemies
+  * Red + Obstacles + Invulnerable
+  * Resized Enemies + Shadows + Invulnerable
+* Level 4
+  * Complete
 #### Dodge Projectiles
+* Level 0
+  * Default
+* Level 1
+  * Barons
+  * Mancubus
+  * Flames
+  * Cacodemons
+  * Resized Agent
+  * Flaming Skulls
+  * City
+* Level 2
+  * Revenants
+  * Arachnotron
+  * City + Resized Agent
+  * Barons + Flaming Skulls
+  * Cacodemons + Flames
+  * Mancubus + Resized Agent
+* Level 3
+  * Flames + Flaming Skulls + Mancubus
+  * Resized Agent + Revenants
+  * City + Arachnotron
+* Level 4
+  * Complete
 
 ## Command line usage
 
@@ -103,6 +145,7 @@ git clone https://github.com/TTomilin/GVizDoom
 | --render-hud                | True            | Render the in-game hud, which displays health, ammo, armour, etc. | 
 | --frame-width               | 84              | Number of pixels to which the width of the frame is scaled down to | 
 | --frame-height              | 84              | Number of pixels to which the height of the frame is scaled down to | 
+| --record                    | False           | Record gameplay footage |
 | --append-statistics         | True            | Append the rolling statistics to an existing file or overwrite | 
 | --statistics-save-frequency | 5000            | Number of iterations after which to write newly aggregated statistics | 
 | --train-report-frequency    | 1000            | Number of iterations after which the training progress is reported |

@@ -200,6 +200,10 @@ if __name__ == "__main__":
         '--frame-height', type = int, default = 84,
         help = 'Number of pixels to which the height of the frame is scaled down to'
     )
+    parser.add_argument(
+        '--record', type = bool_type, default = False,
+        help = 'Record the gameplay'
+    )
 
     # Statistics arguments
     parser.add_argument(
@@ -294,7 +298,7 @@ if __name__ == "__main__":
 
     # Create game instances for every task
     games = [Doom(agent, scenario, args.statistics_save_frequency, args.max_epochs, args.KPI_update_frequency,
-                  args.append_statistics, args.train, args.seed, args.multi_step) for scenario in scenarios]
+                  args.append_statistics, args.train, args.seed, args.multi_step, args.record) for scenario in scenarios]
 
     # Play DOOM
     tasks = [Thread(target = doom.play) for doom in games]

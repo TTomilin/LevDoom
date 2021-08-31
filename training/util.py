@@ -1,14 +1,11 @@
 import argparse
-
 import json
-from numpy import ndarray
-
-from typing import TextIO, Tuple, Dict, List
-
 import math
 import os
+from typing import TextIO, Tuple, Dict, List
 
 import numpy as np
+from numpy import ndarray
 from vizdoom import GameVariable, DoomGame
 
 
@@ -60,7 +57,15 @@ def idx_to_action(action_idx: int, action_size: int) -> []:
     return actions.tolist()
 
 
-def new_episode(game: DoomGame, spawn_point_counter: Dict[int, int], n_spawn_points: int) -> None:
+def new_episode(game, recording_path):
+    if recording_path is not None:
+        game.new_episode(recording_path)
+    else:
+        game.new_episode()
+
+
+def run_new_episode(game: DoomGame, spawn_point_counter: Dict[int, int], n_spawn_points: int, recording_path: str,
+                    seed: int) -> None:
     """
     Workaround for improper random number generation with ACS.
 
@@ -73,8 +78,11 @@ def new_episode(game: DoomGame, spawn_point_counter: Dict[int, int], n_spawn_poi
     :param spawn_point_counter: The dict holding the counts of the previous spawn points
     :param n_spawn_points: Number of spawn points in a given scenario
     """
+    if seed:
+        new_episode(game, recording_path)
+        return
     while True:
-        game.new_episode()
+        new_episode(game, recording_path)
         spawn_point = game.get_game_variable(GameVariable.USER1)
         spawn_point %= 21
         if spawn_point == 0 or spawn_point is math.isnan(spawn_point):
@@ -83,7 +91,8 @@ def new_episode(game: DoomGame, spawn_point_counter: Dict[int, int], n_spawn_poi
             spawn_point_counter[spawn_point] += 1
         else:
             spawn_point_counter[spawn_point] = 0
-        if spawn_point != max(spawn_point_counter, key = spawn_point_counter.get) and len(spawn_point_counter) >= n_spawn_points:
+        if spawn_point != max(spawn_point_counter, key = spawn_point_counter.get) and len(
+                spawn_point_counter) >= n_spawn_points:
             return
 
 

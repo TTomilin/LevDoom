@@ -26,7 +26,7 @@ class Scenario:
                  n_tasks: int,
                  render_hud: bool,
                  name_addition: str,
-                 sound_enabled = False,
+                 sound_enabled = bool,
                  variable_history_size = 5,
                  screen_resolution = ScreenResolution.RES_640X480
                  ):
@@ -133,9 +133,9 @@ class DefendTheCenter(Scenario):
     """
 
     def __init__(self, root_dir: str, task: str, trained_task: str,
-                 window_visible: bool, n_tasks: int, render_hud: bool, name_addition: str):
+                 window_visible: bool, n_tasks: int, render_hud: bool, name_addition: str, sound_enabled = False):
         super().__init__('defend_the_center', root_dir, task, trained_task, window_visible, n_tasks,
-                         render_hud, name_addition)
+                         render_hud, name_addition, sound_enabled)
 
     @property
     def task_list(self) -> List[str]:
@@ -186,18 +186,18 @@ class DTCGameVariable(Enum):
 class HealthGathering(Scenario):
 
     def __init__(self, root_dir: str, task: str, trained_task: str,
-                 window_visible: bool, n_tasks: int, render_hud: bool, name_addition: str):
+                 window_visible: bool, n_tasks: int, render_hud: bool, name_addition: str, sound_enabled = False):
         super().__init__('health_gathering', root_dir, task, trained_task, window_visible, n_tasks,
-                         render_hud, name_addition)
+                         render_hud, name_addition, sound_enabled)
         self.health_kits = 0
         self.poison = 0
 
     @property
     def task_list(self) -> List[str]:
         return ['DEFAULT', 'LAVA', 'SLIME', 'SUPREME', 'POISON', 'OBSTACLES', 'STIMPACKS', 'SHADED_KITS', 'WATER',
-                'RESIZED_KITS', 'SHORT_AGENT', 'SLIMY_OBSTACLES', 'SHADED_STIMPACKS', 'STIMPACKS_POISON',
+                'RESIZED_KITS', 'RESIZED_AGENT', 'SLIMY_OBSTACLES', 'SHADED_STIMPACKS', 'STIMPACKS_POISON',
                 'RESIZED_KITS_LAVA', 'SUPREME_POISON', 'POISON_RESIZED_SHADED_KITS', 'OBSTACLES_SLIME_STIMPACKS',
-                'LAVA_SUPREME_SHORT_AGENT', 'COMPLETE']
+                'LAVA_SUPREME_RESIZED_AGENT', 'COMPLETE']
 
     @property
     def n_spawn_points(self) -> int:
@@ -229,17 +229,17 @@ class HealthGathering(Scenario):
 class SeekAndKill(Scenario):
 
     def __init__(self, root_dir: str, task: str, trained_task: str,
-                 window_visible: bool, n_tasks: int, render_hud: bool, name_addition: str):
+                 window_visible: bool, n_tasks: int, render_hud: bool, name_addition: str, sound_enabled = False):
         super().__init__('seek_and_kill', root_dir, task, trained_task, window_visible, n_tasks,
-                         render_hud, name_addition)
+                         render_hud, name_addition, sound_enabled)
         self.max_velocity = -np.inf
 
     @property
     def task_list(self) -> List[str]:
         return ['DEFAULT', 'RED', 'BLUE', 'SHADOWS', 'OBSTACLES', 'INVULNERABLE', 'MIXED_ENEMIES', 'RESIZED_ENEMIES',
-                "BLUE_SHADOWS", "OBSTACLES_RESIZED_ENEMIES", "RED_MIXED_ENEMIES ", "INVULNERABLE_BLUE ",
-                "RESIZED_ENEMIES_RED ", "SHADOWS_OBSTACLES ", "BLUE_MIXED", "RESIZED_ENEMIES",
-                "RED_OBSTACLES_INVULNERABLE", "RESIZED_SHADOWS_INVULNERABLE", "COMPLETE"]
+                'BLUE_SHADOWS', 'OBSTACLES_RESIZED_ENEMIES', 'RED_MIXED_ENEMIES', 'INVULNERABLE_BLUE',
+                'RESIZED_ENEMIES_RED', 'SHADOWS_OBSTACLES', 'BLUE_MIXED_RESIZED_ENEMIES',
+                'RED_OBSTACLES_INVULNERABLE', 'RESIZED_SHADOWS_INVULNERABLE', 'COMPLETE']
 
     @property
     def n_spawn_points(self) -> int:
@@ -294,9 +294,9 @@ class SKGameVariable(Enum):
 class DodgeProjectiles(Scenario):
 
     def __init__(self, root_dir: str, task: str, trained_task: str,
-                 window_visible: bool, n_tasks: int, render_hud: bool, name_addition: str):
+                 window_visible: bool, n_tasks: int, render_hud: bool, name_addition: str, sound_enabled = False):
         super().__init__('dodge_projectiles', root_dir, task, trained_task, window_visible, n_tasks,
-                         render_hud, name_addition)
+                         render_hud, name_addition, sound_enabled)
 
     @property
     def task_list(self) -> List[str]:

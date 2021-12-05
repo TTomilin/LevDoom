@@ -238,33 +238,33 @@ class DQNAgent(Agent):
                 reward += math.pow(self.gamma, step + 1) * mini_batch[i][step][2]
             rewards.append(reward)
 
-        # Predict Q-values for the current state using the online network
-        target = self.model.predict(states)
+        # Predict real Q-values for the current state using the online network
+        q_values = self.model.predict(states)
 
         # Make a copy of the target for prioritized memory replay
-        target_old = np.array(target)
+        q_values_old = np.array(q_values)
 
         # Predict Q-values for the final state using the online network
-        target_next = self.model.predict(states_final)
+        q_values_next = self.model.predict(states_final)
 
         # Predict Q-values for the final state using the target network
-        target_val = self.target_model.predict(states_final)
+        target = self.target_model.predict(states_final)
 
         for i in range(batch_size):
             # Terminal state update receives no future rewards
-            terminal = 0 if done[i] else 1
+            terminal = 0 if done[i] else 1  # TODO unnecessary
 
             if self.double_dqn:
                 # Double DQN: Q_max = Q_target(s', argmax_a' Q(s', a'))
                 # Estimate Q-values using the online network
-                best_action = np.argmax(target_next[i])
+                best_action = np.argmax(q_values_next[i])
                 # Select the values with the highest Q-value wrt to the target network
-                best_action_value = target_val[i][best_action]
+                best_action_value = target[i][best_action]
             else:
                 # Value of the best actions for the next state according to the target network
-                best_action_value = np.max(target_val[i])
+                best_action_value = np.max(target[i])
 
-            target[i][actions[i]] = rewards[i] + terminal * math.pow(self.gamma, n_steps) * best_action_value
+            q_values[i][actions[i]] = rewards[i] + terminal * math.pow(self.gamma, n_steps) * best_action_value
 
             # Obtain the weights of the samples according to task difficulty
             if self.task_prioritization:
@@ -275,7 +275,7 @@ class DQNAgent(Agent):
                 sample_weights[i, 0] = max_KPI / KPI
 
         with self.lock:
-            loss = self.model.train_on_batch(states, target, sample_weight = sample_weights)
+            loss = self.model.train_on_batch(states, q_values, sample_weight = sample_weights)
 
         if self.memory.prioritized:
             # To correct for the bias, use importance sampling weights
@@ -283,14 +283,14 @@ class DQNAgent(Agent):
             # loss = self.model.train_on_batch(states, target, sample_weight = IS_weights)
 
             # Update priority in the SumTree
-            absolute_errors = np.abs(np.mean(target_old - target, axis = 1))
+            absolute_errors = np.abs(np.mean(q_values_old - q_values, axis = 1))
             self.memory.batch_update(tree_idx, absolute_errors)
 
         # Update the target model to be same with model
         if not time_step % self.update_target_freq:
             self.update_target_model()
 
-        return np.max(target[-1, -1]), loss
+        return np.max(q_values[-1, -1]), loss
 
 
 class DRQNAgent(DQNAgent):
@@ -386,6 +386,7 @@ class DRQNAgent(DQNAgent):
                 # Value of the best actions for the next state according to the target network
                 best_action_value = np.max(target_val[i])
 
+            # TODO try making the reward cumulative
             target[i][int(actions[i][-1])] = rewards[i][-1] + self.gamma * best_action_value
 
         with self.lock:

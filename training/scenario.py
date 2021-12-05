@@ -209,6 +209,16 @@ class HealthGathering(Scenario):
         fields.extend(['health_found'])
         return fields
 
+    def shape_reward(self, reward: float, game_variables: deque) -> float:
+        if len(game_variables) < 2:
+            return reward
+        # +0.01 living reward is already configured in-game
+        current_vars = game_variables[-1]
+        previous_vars = game_variables[-2]
+        if current_vars[DPGameVariable.HEALTH.value] > previous_vars[DPGameVariable.HEALTH.value]:
+            reward += 1  # Loss of HEALTH
+        return reward
+
     def get_measurements(self, game_variables: deque, terminated: bool) -> np.ndarray:
         if terminated:
             self.health_kits = 0

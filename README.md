@@ -172,3 +172,5 @@ python3 -u run.py --algorithm dueling_dqn --scenario defend_the_center --train F
     --tasks gore_mossy_bricks --noisy-nets True --load-model True --observe 0 \
     --decay-epsilon False --max-epochs 100 --trained-model multi_SEED_1111
 ```
+
+Integrating ViZDoom with Gym widely inspired by [ViZDoomGym](https://github.com/shakenes/vizdoomgym).

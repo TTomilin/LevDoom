@@ -7,7 +7,7 @@ import os
 
 from .agent import Agent
 from .scenario import Scenario
-from .util import array_mean, join_stats, ensure_directory
+from util import array_mean, join_stats, ensure_directory
 
 MIN_KPI = 0.1
 

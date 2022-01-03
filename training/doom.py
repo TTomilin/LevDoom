@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 from __future__ import print_function
 
-import random
 import time
 import numpy as np
 from collections import deque
@@ -10,7 +9,7 @@ from threading import get_ident
 from .agent import Agent
 from .scenario import Scenario
 from .stats_writer import Statistics
-from .util import run_new_episode, idx_to_action
+from util import run_new_episode, idx_to_action
 
 
 class Doom:
@@ -36,7 +35,8 @@ class Doom:
         scenario = self.scenario
         task_id = scenario.task
         model_name = agent.model_path.split('/')[-1].split('.')[0]
-        print(f'Running {type(agent).__name__} on {scenario.name}, task {task_id}, model {model_name}, thread {get_ident()}')
+        print(
+            f'Running {type(agent).__name__} on {scenario.name}, task {task_id}, model {model_name}, thread {get_ident()}')
         spawn_point_counter = {}
 
         # Statistic counters
@@ -49,11 +49,11 @@ class Doom:
         game_state = game.get_state()
 
         # Store a fixed length of most recent variables from the game
-        game_variables = deque(maxlen = scenario.variable_history_size)
-        game_variables.append(game_state.game_variables)
+        game_variables = deque(maxlen=scenario.variable_history_size)
+        game_variables.append(game_state.game_variable_buffer)
 
         # Store a fixed length of most recent transitions for multi-step updates
-        transitions = deque(maxlen = self.n_steps)
+        transitions = deque(maxlen=self.n_steps)
 
         # Create statistics manager
         statistics = Statistics(agent, scenario, self.stats_save_freq, self.KPI_update_freq, self.append_statistics)
@@ -86,13 +86,14 @@ class Doom:
 
                 # Run a new episode. Use a fixed seed if it is provided, otherwise ensure randomness
                 game.set_seed(self.seed if self.seed else np.random.randint(10000))
-                run_new_episode(game, spawn_point_counter, scenario.n_spawn_points, self.get_recording_path(n_game), self.seed)
+                run_new_episode(game, spawn_point_counter, scenario.n_spawn_points, self.get_recording_path(n_game),
+                                self.seed)
             else:
                 frames_alive += 1
 
             # Acquire and transform the new state of the game
             new_state = game.get_state()
-            game_variables.append(new_state.game_variables)
+            game_variables.append(new_state.game_variable_buffer)
             new_state = agent.transform_new_state(current_state, new_state)
 
             # Shape the reward

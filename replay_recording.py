@@ -3,19 +3,19 @@ import os
 
 from vizdoom import Mode, ScreenResolution, DoomGame
 
-parser = argparse.ArgumentParser(description = 'GViZDoom runner')
+parser = argparse.ArgumentParser(description='GViZDoom runner')
 
 parser.add_argument(
-    '-s', '--scenario', type = str, default = None, required = True,
-    help = 'Name of the scenario e.g., `defend_the_center` (case-insensitive)'
+    '-s', '--scenario', type=str, default=None, required=True,
+    help='Name of the scenario e.g., `defend_the_center` (case-insensitive)'
 )
 parser.add_argument(
-    '-t', '--task', type = str, default = None, required = True,
-    help = 'Name of the task, e.g., `default gore stone_wall` (case-insensitive)'
+    '-t', '--task', type=str, default=None, required=True,
+    help='Name of the task, e.g., `default gore stone_wall` (case-insensitive)'
 )
 parser.add_argument(
-    '-e', '--epochs', type = int, default = 3,
-    help = 'Number of recorded episodes'
+    '-e', '--epochs', type=int, default=3,
+    help='Number of recorded episodes'
 )
 
 # Parse the input arguments

@@ -2,6 +2,8 @@ from collections import deque
 from typing import List
 
 from aenum import Enum
+from gym import Space
+from gym.spaces import MultiDiscrete
 
 from env.base import Scenario
 
@@ -19,21 +21,27 @@ class DodgeProjectiles(Scenario):
                 'CITY_ARACHNOTRON', 'COMPLETE']
 
     @property
-    def n_spawn_points(self) -> int:
-        return 1
+    def scenario_variables(self) -> List[Scenario.DoomAttribute]:
+        return [Scenario.DoomAttribute.HEALTH]
 
     def shape_reward(self, reward: float) -> float:
-        if len(self.game_variables) < 2:
-            return reward
+        if len(self.game_variable_buffer) < 2:
+            return reward  # Not enough variables in the buffer
         # +0.01 living reward is already configured in-game
-        current_vars = self.game_variables[-1]
-        previous_vars = self.game_variables[-2]
+        current_vars = self.game_variable_buffer[-1]
+        previous_vars = self.game_variable_buffer[-2]
         if current_vars[DPGameVariable.HEALTH.value] < previous_vars[DPGameVariable.HEALTH.value]:
             reward -= 1  # Loss of HEALTH
         return reward
 
     def get_performance_indicator(self) -> Scenario.PerformanceIndicator:
         return Scenario.PerformanceIndicator.FRAMES_ALIVE
+
+    def get_action_space(self) -> Space:
+        return MultiDiscrete([
+            3,  # noop, strafe left, strafe right
+            2,  # noop, sprint
+        ])
 
 
 class DPGameVariable(Enum):

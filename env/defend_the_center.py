@@ -3,6 +3,8 @@ from typing import List, Dict
 
 import numpy as np
 from aenum import Enum
+from gym import Space
+from gym.spaces import MultiDiscrete
 
 from env.base import Scenario
 
@@ -29,37 +31,29 @@ class DefendTheCenter(Scenario):
     def extra_statistics(self) -> List[str]:
         return ['kills', 'ammo']
 
-    @property
-    def n_spawn_points(self) -> int:
-        return 1
-
-    @property
-    def statistics_fields(self) -> []:
-        fields = super().statistics_fields
-        fields.extend(['kills', 'ammo'])
-        return fields
-
     def shape_reward(self, reward: float) -> float:
-        if len(self.game_variables) < 2:
-            return reward
-        current_vars = self.game_variables[-1]
-        previous_vars = self.game_variables[-2]
+        if len(self.game_variable_buffer) < 2:
+            return reward  # Not enough variables in the buffer
+        current_vars = self.game_variable_buffer[-1]
+        previous_vars = self.game_variable_buffer[-2]
         if current_vars[DTCGameVariable.AMMO2.value] < previous_vars[DTCGameVariable.AMMO2.value]:
             reward -= 0.1  # Use of ammunition
         if current_vars[DTCGameVariable.HEALTH.value] < previous_vars[DTCGameVariable.HEALTH.value]:
             reward -= 0.1  # Loss of HEALTH
         return reward
 
-    def additional_statistics(self, game_vars) -> Dict[str, float]:
-        return {'kills': game_vars[-1][DTCGameVariable.KILL_COUNT.value],
-                'ammo': game_vars[-1][DTCGameVariable.AMMO2.value]}
-
-    def get_measurements(self, game_variables: deque, terminated: bool) -> np.ndarray:
-        # TODO Determine suitable measurements for DFP
-        pass
+    def additional_statistics(self) -> Dict[str, float]:
+        return {'kills': self.game_variable_buffer[-1][DTCGameVariable.KILL_COUNT.value],
+                'ammo': self.game_variable_buffer[-1][DTCGameVariable.AMMO2.value]}
 
     def get_performance_indicator(self) -> Scenario.PerformanceIndicator:
         return Scenario.PerformanceIndicator.FRAMES_ALIVE
+
+    def get_action_space(self) -> Space:
+        return MultiDiscrete([
+            3,  # noop, turn left, turn right
+            2,  # noop, shoot
+        ])
 
 
 class DTCGameVariable(Enum):

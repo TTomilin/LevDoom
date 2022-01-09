@@ -1,7 +1,10 @@
 from argparse import Namespace
 from typing import List
 
+import gym
 from aenum import Enum
+from gym import Space
+from gym.spaces import Discrete, MultiDiscrete
 
 from env.base import Scenario
 
@@ -19,22 +22,12 @@ class HealthGathering(Scenario):
                 'LAVA_SUPREME_RESIZED_AGENT', 'COMPLETE']
 
     @property
-    def n_spawn_points(self) -> int:
-        return 1
-
-    @property
     def scenario_variables(self) -> List[Scenario.DoomAttribute]:
         return [Scenario.DoomAttribute.HEALTH]
 
-    @property
-    def statistics_fields(self) -> []:
-        fields = super().statistics_fields
-        fields.extend(['health_found'])
-        return fields
-
     def shape_reward(self, reward: float) -> float:
         if len(self.game_variable_buffer) < 2:
-            return reward
+            return reward  # Not enough variables in the buffer
         # +0.01 living reward is already configured in-game
         current_vars = self.game_variable_buffer[-1]
         previous_vars = self.game_variable_buffer[-2]
@@ -44,6 +37,13 @@ class HealthGathering(Scenario):
 
     def get_performance_indicator(self) -> Scenario.PerformanceIndicator:
         return Scenario.PerformanceIndicator.FRAMES_ALIVE
+
+    def get_action_space(self) -> Space:
+        return MultiDiscrete([
+            3,  # noop, turn left, turn right
+            2,  # noop, forward
+            2,  # noop, sprint
+        ])
 
 
 class HGGameVariable(Enum):

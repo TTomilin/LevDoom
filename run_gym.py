@@ -78,33 +78,19 @@ if __name__ == "__main__":
 
     # env = make_vec_env(lambda: env, n_envs=n_envs, monitor_dir="./ppo_dtc_monitor", wrapper_class=ResizeObservation,
     #                    wrapper_kwargs={'shape': (args.frame_height, args.frame_width)})
-    env = make_vec_env(lambda: env, n_envs=args.n_envs, monitor_dir="./ppo_dtc_monitor")
+    env = make_vec_env(lambda: env, n_envs=args.n_envs, monitor_dir=f"{root_dir}/monitor")
     eval_env = make_vec_env(lambda: eval_env)
 
-    # Train the agent
-    # model = PPO('MlpPolicy', env, verbose=2, device="cuda", tensorboard_log="./ppo_defend_the_center_tensorboard/")
-
+    # Create the agent
     if args.load_model:
-        model = algorithm.load("./models", env=env, device=args.device)
+        agent = algorithm.load(f"{root_dir}/models", env=env, device=args.device)
     else:
-        model = algorithm('MultiInputPolicy', env, verbose=1, device=args.device, ent_coef=0.01,
-                          tensorboard_log=f"./{args.algorithm}/{args.scenario}/")
+        agent = algorithm('MlpPolicy', env, verbose=1, device=args.device,
+                          tensorboard_log=f"{root_dir}/logs/{args.scenario}/{args.algorithm}/")
 
-    model = model.learn(total_timesteps=args.max_train_iterations, tb_log_name=f"{'_'.join(args.tasks)}_{args.log_name}",
-                        eval_env=eval_env, eval_freq=1000, callback=RecorderCallback(env, eval_env, extra_stats))
-    # model = model.learn(total_timesteps=100_000, tb_log_name="second_run", reset_num_timesteps=False)
-    # Test the trained agent
-    model.save("./models")
-    obs = env.reset()
-    n_episodes = 1000
-    n_steps = 1000
-    for eps in range(n_episodes):
-        for step in range(n_steps):
-            action, _ = model.predict(obs, deterministic=True)
-            obs, reward, done, info = env.step(action)
-            env.render(mode='human')
-            if done.any():
-                # Note that the VecEnv resets automatically
-                # when a done signal is encountered
-                logging.info("Done, episode=", eps)
-                break
+    # Train the agent
+    agent = agent.learn(total_timesteps=args.max_train_iterations, tb_log_name= f"{'_'.join(args.tasks)}_{args.log_name}",
+                        callback=RecorderCallback(env, eval_env, extra_stats, log_path='./logs'))
+
+    # Save the model
+    agent.save(f"{root_dir}/models")

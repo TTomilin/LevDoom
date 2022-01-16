@@ -1,9 +1,7 @@
-from collections import deque
+from argparse import Namespace
 from typing import List, Dict
 
-import numpy as np
 from aenum import Enum
-from gym import Space
 from gym.spaces import MultiDiscrete
 
 from env.base import Scenario
@@ -17,8 +15,8 @@ class DefendTheCenter(Scenario):
     who will invoke damage to agent agent as they reach melee distance.
     """
 
-    def __init__(self, **kwargs):
-        super().__init__('defend_the_center', **kwargs)
+    def __init__(self, root_dir: str, task: str, args: Namespace, multi_action=True):
+        super().__init__('defend_the_center', root_dir, task, args, multi_action)
 
     @property
     def task_list(self) -> List[str]:
@@ -28,8 +26,12 @@ class DefendTheCenter(Scenario):
                 'COMPLETE']
 
     @property
-    def extra_statistics(self) -> List[str]:
-        return ['kills', 'ammo']
+    def scenario_variables(self) -> List[Scenario.DoomAttribute]:
+        return [Scenario.DoomAttribute.KILLS, Scenario.DoomAttribute.AMMO, Scenario.DoomAttribute.HEALTH]
+
+    @property
+    def statistics_fields(self) -> List[str]:
+        return ['kills', 'ammo', 'health']
 
     def shape_reward(self, reward: float) -> float:
         if len(self.game_variable_buffer) < 2:
@@ -42,20 +44,22 @@ class DefendTheCenter(Scenario):
             reward -= 0.1  # Loss of HEALTH
         return reward
 
-    def additional_statistics(self) -> Dict[str, float]:
+    def get_episode_statistics(self) -> Dict[str, float]:
+        # TODO add average health
         return {'kills': self.game_variable_buffer[-1][DTCGameVariable.KILL_COUNT.value],
                 'ammo': self.game_variable_buffer[-1][DTCGameVariable.AMMO2.value]}
 
-    def get_performance_indicator(self) -> Scenario.PerformanceIndicator:
-        return Scenario.PerformanceIndicator.FRAMES_ALIVE
+    def get_key_performance_indicator(self) -> Scenario.KeyPerformanceIndicator:
+        return Scenario.KeyPerformanceIndicator.FRAMES_ALIVE
 
-    def get_action_space(self) -> Space:
+    def get_multi_action_space(self) -> MultiDiscrete:
         return MultiDiscrete([
             3,  # noop, turn left, turn right
             2,  # noop, shoot
         ])
 
 
+# TODO Deprecate
 class DTCGameVariable(Enum):
     KILL_COUNT = 0
     AMMO2 = 1

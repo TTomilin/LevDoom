@@ -1,21 +1,31 @@
 from argparse import Namespace
-from collections import deque
-from typing import List, Dict
+from typing import List, Dict, Any
 
 import numpy as np
 from aenum import Enum
-from gym import Space
 from gym.spaces import MultiDiscrete
-from scipy.spatial import distance
+from scipy import spatial
+from stable_baselines3.common.logger import Logger
+from vizdoom import GameVariable
 
 from env.base import Scenario
 
 
 class SeekAndKill(Scenario):
 
-    def __init__(self, root_dir: str, task: str, args: Namespace):
-        super().__init__('seek_and_kill', root_dir, task, args)
+    def __init__(self, root_dir: str, task: str, args: Namespace, multi_action=True):
+        super().__init__('seek_and_kill', root_dir, task, args, multi_action)
         self.max_velocity = -np.inf
+        self.distance_buffer = []
+        self.distance_buffer_eval = []
+        self.ammo_used = 0
+        self.kill_reward = args.kill_reward
+        self.traversal_reward_scaler = args.traversal_reward_scaler
+        self.health_loss_penalty = args.health_loss_penalty
+        self.ammo_used_penalty = args.ammo_used_penalty
+        self.field_indices = {}
+        for index, field in enumerate(self.scenario_variables):
+            self.field_indices[field.name.lower()] = index
 
     @property
     def task_list(self) -> List[str]:
@@ -25,73 +35,83 @@ class SeekAndKill(Scenario):
                 'RED_OBSTACLES_INVULNERABLE', 'RESIZED_SHADOWS_INVULNERABLE', 'COMPLETE']
 
     @property
-    def scenario_variables(self) -> List[Scenario.DoomAttribute]:
-        return [Scenario.DoomAttribute.HEALTH, Scenario.DoomAttribute.KILLS,
-                Scenario.DoomAttribute.AMMO, Scenario.DoomAttribute.POSITION]
+    def scenario_variables(self) -> List[GameVariable]:
+        return [GameVariable.HEALTH, GameVariable.KILLCOUNT, GameVariable.AMMO2, GameVariable.POSITION_X,
+                GameVariable.POSITION_Y]
+
+    @property
+    def statistics_fields(self) -> List[str]:
+        return ['kill_count', 'health', 'ammo_used', 'movement']  # The order matters
+
+    @property
+    def display_episode_length(self) -> bool:
+        return False
 
     @property
     def n_spawn_points(self) -> int:
         return 11
 
     @property
-    def variable_buffer_size(self) -> int:
-        return 5
-
-    @property
-    def statistics_fields(self) -> List[str]:
-        fields = super().statistics_fields
-        fields.extend(['kill_count', 'movement'])
-        return fields
+    def default_variable_buffer_size(self) -> int:
+        return 15
 
     def shape_reward(self, reward: float) -> float:
         if len(self.game_variable_buffer) < 2:
             return reward  # Not enough variables in the buffer
 
-        # Utilize a dense reward system by encouraging movement over the previous n iterations
+        # Utilize a dense reward system by encouraging movement over previous iterations
+        distance = self.distance_traversed()
+        self.distance_buffer.append(distance)
+        reward += distance * self.traversal_reward_scaler  # Increase reward linearly
+
         current_vars = self.game_variable_buffer[-1]
         previous_vars = self.game_variable_buffer[-2]
 
-        dist = self.distance_traversed()
-        # Increase reward linearly to the distance the agent has travelled over the past 5 frames
-        reward += dist / 5000.0  # TODO make the scaling factor configurable
-        # TODO make all reward scaling attributes configurable (kill count, survival, etc.)
+        kc_idx = self.field_indices['killcount']
+        health_idx = self.field_indices['health']
+        ammo_idx = self.field_indices['ammo2']
 
-        # TODO store each reward separately
-
-        if current_vars[SKGameVariable.HEALTH.value] < previous_vars[SKGameVariable.HEALTH.value]:
-            reward -= 0.3  # Loss of HEALTH
-        if current_vars[SKGameVariable.AMMO2.value] < previous_vars[SKGameVariable.AMMO2.value]:
-            reward -= 0.3  # Loss of AMMO
+        if current_vars[kc_idx] > previous_vars[kc_idx]:
+            reward += self.kill_reward
+        if current_vars[health_idx] < previous_vars[health_idx]:
+            reward -= self.health_loss_penalty
+        if current_vars[ammo_idx] < previous_vars[ammo_idx]:
+            reward -= self.ammo_used_penalty
+            self.ammo_used += 1
 
         return reward
 
     def distance_traversed(self):
-        current_coords = [self.game_variable_buffer[-1][SKGameVariable.POSITION_X.value],
-                          self.game_variable_buffer[-1][SKGameVariable.POSITION_Y.value]]
-        past_coords = [self.game_variable_buffer[0][SKGameVariable.POSITION_X.value],  # TODO Rework retrieval
-                       self.game_variable_buffer[0][SKGameVariable.POSITION_Y.value]]
-        dist = distance.euclidean(current_coords, past_coords)
-        return dist
+        x_pos = self.field_indices['position_x']
+        y_pos = self.field_indices['position_y']
+        current_coords = [self.game_variable_buffer[-1][x_pos],
+                          self.game_variable_buffer[-1][y_pos]]
+        past_coords = [self.game_variable_buffer[0][x_pos],
+                       self.game_variable_buffer[0][y_pos]]
+        return spatial.distance.euclidean(current_coords, past_coords)
 
-    def additional_statistics(self) -> Dict[str, float]:
-        return {'kill_count': self.game_variable_buffer[-1][SKGameVariable.KILL_COUNT.value],
-                'movement': self.distance_traversed()}
+    def get_episode_statistics(self) -> Dict[str, float]:
+        statistics = {'kill_count': self.game_variable_buffer[-1][self.field_indices['killcount']],
+                      'health': self.game_variable_buffer[-1][self.field_indices['health']],
+                      'ammo_used': self.ammo_used,
+                      'movement': np.mean(self.distance_buffer)}
+        self.ammo_used = 0
+        self.distance_buffer.clear()
+        return statistics
 
-    def get_performance_indicator(self) -> Scenario.PerformanceIndicator:
-        return Scenario.PerformanceIndicator.KILL_COUNT
+    def log_evaluation(self, logger: Logger, statistics: Dict[str, Any]) -> None:
+        logger.record("eval/health", statistics['health'])
+        logger.record("eval/kill_count", statistics['kill_count'])
+        logger.record("eval/ammo_used", statistics['ammo_used'])
+        logger.record("eval/movement", statistics['movement'])
 
-    def get_action_space(self) -> Space:
+    def get_key_performance_indicator(self) -> Scenario.KeyPerformanceIndicator:
+        return Scenario.KeyPerformanceIndicator.KILL_COUNT
+
+    def get_multi_action_space(self) -> MultiDiscrete:
         return MultiDiscrete([
             3,  # noop, turn left, turn right
             2,  # noop, forward
             2,  # noop, shoot
             2,  # noop, sprint
         ])
-
-
-class SKGameVariable(Enum):
-    HEALTH = 0
-    KILL_COUNT = 1
-    AMMO2 = 2
-    POSITION_X = 3
-    POSITION_Y = 4

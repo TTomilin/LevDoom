@@ -6,8 +6,9 @@ from typing import Dict, List, Any
 import skimage
 import skimage.transform
 from Cython.Utils import OrderedSet
-from gym import spaces, Space
+from gym import Space
 from gym.spaces import Discrete, Box, MultiDiscrete
+from stable_baselines3.common.logger import Logger
 
 try:
     import vizdoom
@@ -55,17 +56,14 @@ class Scenario(gym.Env):
         KILLS = ([GameVariable.KILLCOUNT], Discrete(1)),
         AMMO = ([GameVariable.AMMO2], Discrete(1)),
 
-    class PerformanceIndicator(Enum):
+    class KeyPerformanceIndicator(Enum):
         FRAMES_ALIVE = auto()
         KILL_COUNT = auto()
 
     class Task(Enum):
         DEFAULT = auto()
 
-    def __init__(self, name: str, root_dir: str, task: str, args: Namespace):
-        self.variable_history_size = args.variable_history_size
-        self.frames_per_action = args.frames_per_action
-
+    def __init__(self, name: str, root_dir: str, task: str, args: Namespace, multi_action: bool):
         # Naming
         self.name = name
         self.root_dir = root_dir
@@ -88,35 +86,57 @@ class Scenario(gym.Env):
         self.screen_shape = (args.frame_height, args.frame_width, game.get_screen_channels())
         self.game = game
 
-        # spaces_dict: Dict[str, spaces] = {
-        #     'screen': Box(0, 255, self.screen_shape, dtype = np.uint8)
-        # }
-        doom_attributes = OrderedSet(map(lambda var: Scenario.DoomAttribute[var.upper()], args.game_vars))
-        doom_attributes.update(self.scenario_variables)
-        self.doom_variables = list(map(lambda attr: DoomVariable(attr.name.lower(), attr.value[0][0], attr.value[0][1]),
-                                       list(doom_attributes)))
-        # self.doom_attributes = deepcopy(self.doom_attributes)
-        index = 0
+        # doom_attributes = OrderedSet(map(lambda var: Scenario.DoomAttribute[var.upper()], args.game_vars))
+        # doom_attributes.update(self.scenario_variables)
+        # self.doom_variables = list(map(lambda attr: DoomVariable(attr.name.lower(), attr.value[0][0], attr.value[0][1]),
+        #                                list(doom_attributes)))
+
+        # Reassign desired game variables
         self.game.clear_available_game_variables()
-        for variable in self.doom_variables:
-            for label in variable.game_variables:
-                self.game.add_available_game_variable(label)
-                variable.indices.append(index)
-                index += 1
-            # spaces_dict[variable.name] = variable.space
-        # self.observation_space = spaces.Dict(spaces_dict)
-        self.observation_space = Box(0, 255, self.screen_shape, dtype = np.uint8)
+        for variable in self.scenario_variables:
+            self.game.add_available_game_variable(variable)
+
+        # Spaces
+        self.observation_space = Box(0, 255, self.screen_shape, dtype=np.uint8)
+        self.action_space = self.get_multi_action_space() if multi_action else Discrete(
+            len(self.game.get_available_buttons()))
+
         self.game.init()
-        self.game_variable_buffer = deque(maxlen = self.variable_buffer_size)
+
+        variable_buffer_size = self.default_variable_buffer_size if args.variable_buffer_size is None else args.variable_buffer_size
+        self.game_variable_buffer = deque(maxlen=variable_buffer_size)
         self.game_variable_buffer.append(self.game.get_state().game_variables)
-        # self.action_space = Discrete(len(self.game.get_available_buttons()))
-        self.action_space = self.get_action_space()
+
+        self.frames_per_action = args.frames_per_action
+
         self.state = None
         self.viewer = None
 
     @property
     def task_list(self) -> List[str]:
         """ List of the available tasks for the given scenario """
+        raise NotImplementedError
+
+    def get_key_performance_indicator(self) -> KeyPerformanceIndicator:
+        """
+        Every scenario has a key performance indicator (KPI) to determine the running performance
+        of the agent. This is used for dynamic task prioritization, where the loss is scaled
+        proportional to the task difficulty. This indicator determines the complexity of the task.
+        :return: The type of the performance indicator of the implementing scenario
+        """
+        raise NotImplementedError
+
+    def get_multi_action_space(self) -> MultiDiscrete:
+        """
+        :return: The multi discrete version of the action space of the scenario
+        """
+        raise NotImplementedError
+
+    def log_evaluation(self, logger: Logger, statistics: Dict[str, Any]) -> None:
+        """
+        Log scenario specific statistics during evaluation
+        :param statistics: Aggregated info buffer
+        """
         raise NotImplementedError
 
     @property
@@ -130,13 +150,13 @@ class Scenario(gym.Env):
         return f'{self.root_dir}/scenarios/{self.name}/{self.task}.wad'
 
     @property
-    def extra_statistics(self) -> List[str]:
-        """ Extra metrics that will be included in the rolling statistics """
+    def scenario_variables(self) -> List[DoomAttribute]:
+        """ Default scenario specific game variables that will be returned from the ViZDoom environment """
         return []
 
     @property
-    def scenario_variables(self) -> List[DoomAttribute]:
-        """ Default scenario specific game variables that will be returned from the ViZDoom environment """
+    def statistics_fields(self) -> List[str]:
+        """ Names of metrics that will be included in the rolling statistics """
         return []
 
     @property
@@ -145,42 +165,34 @@ class Scenario(gym.Env):
         return 2
 
     @property
-    def statistics_fields(self) -> List[str]:
-        return []
-
-    @property
     def n_spawn_points(self) -> int:
         """ Number of locations where the agent may spawn """
         return 1
 
+    @property
+    def default_variable_buffer_size(self) -> int:
+        """ Default number of game variables kept in the buffer for reward shaping and storing statistics """
+        return 2
+
     def shape_reward(self, reward: float) -> float:
         """
-        Override this method to include scenario specific reward shaping
+        Implement this method to include scenario specific reward shaping
         :param reward: The reward from the previous iteration of the game
         """
         return reward
 
-    def additional_statistics(self) -> Dict[str, float]:
+    def get_episode_statistics(self) -> Dict[str, float]:
         """
         Implement this method to provide extra scenario specific statistics
         :return: Dictionary of additional statistics. Empty by default
         """
         return {}
 
-    def get_performance_indicator(self) -> PerformanceIndicator:
+    def display_episode_length(self) -> bool:
         """
-        Every scenario has a key performance indicator (KPI) to determine the running performance
-        of the agent. This is used for dynamic task prioritization, where the loss is scaled
-        proportional to the task difficulty. This indicator determines the complexity of the task.
-        :return: The type of the performance indicator of the implementing scenario
+        :return: Boolean indicating whether to display the mean episode length in the statistisc
         """
-        raise NotImplementedError
-
-    def get_action_space(self) -> Space:
-        """
-        :return: The action space of the scenario
-        """
-        raise NotImplementedError
+        return True
 
     def step(self, action):
         actions_flattened = self._convert_actions(action)
@@ -197,7 +209,7 @@ class Scenario(gym.Env):
         reward = self.game.get_last_reward()
         reward = self.shape_reward(reward)
 
-        info = self.additional_statistics()
+        info = self.get_episode_statistics() if done else {}
         return self._collect_observations(), reward, done, info
 
     def reset(self):
@@ -208,7 +220,7 @@ class Scenario(gym.Env):
         self.state = self.game.get_state()
         return self._collect_observations()
 
-    def render(self, mode = "human"):
+    def render(self, mode="human"):
         img = self.game.get_state().screen_buffer
         img = np.transpose(img, [1, 2, 0])
         if mode == 'rgb_array':
@@ -227,14 +239,6 @@ class Scenario(gym.Env):
 
     def _convert_actions(self, actions):
         """Convert actions from gym action space to the action space expected by Doom game."""
-
-        # if self.composite_action_space:
-        #     # composite action space with multiple subspaces
-        #     spaces = self.action_space.spaces
-        # else:
-        #     # simple action space, e.g. Discrete. We still treat it like composite of length 1
-        #     spaces = (self.action_space, )
-        #     actions = (actions, )
         space_type = type(self.action_space)
         if space_type == MultiDiscrete:
             spaces = self.action_space.nvec
@@ -253,25 +257,11 @@ class Scenario(gym.Env):
 
     def _collect_observations(self):
         if self.state is None:
-            return np.zeros(self.observation_space.shape, dtype = self.observation_space.dtype)
+            # There is no state in the terminal step, return a "zero observations" instead
+            return np.zeros(self.observation_space.shape, dtype=self.observation_space.dtype)
         else:
             screen = np.transpose(self.state.screen_buffer, (1, 2, 0))
             return skimage.transform.resize(screen, self.screen_shape)
-
-    # def _collect_observations(self):
-    #     observations = {}
-    #     if self.state is not None:
-    #         screen = np.transpose(self.state.screen_buffer, (1, 2, 0))
-    #         screen = skimage.transform.resize(screen, self.screen_shape)
-    #         observations['screen'] = screen
-    #         # for variable in self.doom_variables:
-    #         #     observations[variable.name] = np.array([self.state.game_variables[i] for i in variable.indices])
-    #     else:
-    #         # There is no state in the terminal step, return a "zero observations" instead
-    #         for key, space in self.observation_space.spaces.items():
-    #             observations[key] = np.zeros(space.shape, dtype = space.dtype)
-    #
-    #     return observations
 
     def _idx_to_action(self, action_idx: int) -> List[int]:
         actions = np.zeros([self.action_space.n])

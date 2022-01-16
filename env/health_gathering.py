@@ -1,18 +1,16 @@
 from argparse import Namespace
 from typing import List
 
-import gym
 from aenum import Enum
-from gym import Space
-from gym.spaces import Discrete, MultiDiscrete
+from gym.spaces import MultiDiscrete
 
 from env.base import Scenario
 
 
 class HealthGathering(Scenario):
 
-    def __init__(self, root_dir: str, task: str, args: Namespace):
-        super().__init__('health_gathering', root_dir, task, args)
+    def __init__(self, root_dir: str, task: str, args: Namespace, multi_action=False):
+        super().__init__('health_gathering', root_dir, task, args, multi_action)
 
     @property
     def task_list(self) -> List[str]:
@@ -25,9 +23,14 @@ class HealthGathering(Scenario):
     def scenario_variables(self) -> List[Scenario.DoomAttribute]:
         return [Scenario.DoomAttribute.HEALTH]
 
+    @property
+    def statistics_fields(self) -> List[str]:
+        return ['health']
+
     def shape_reward(self, reward: float) -> float:
         if len(self.game_variable_buffer) < 2:
             return reward  # Not enough variables in the buffer
+
         # +0.01 living reward is already configured in-game
         current_vars = self.game_variable_buffer[-1]
         previous_vars = self.game_variable_buffer[-2]
@@ -35,10 +38,10 @@ class HealthGathering(Scenario):
             reward += 1  # Picked up health kit
         return reward
 
-    def get_performance_indicator(self) -> Scenario.PerformanceIndicator:
-        return Scenario.PerformanceIndicator.FRAMES_ALIVE
+    def get_key_performance_indicator(self) -> Scenario.KeyPerformanceIndicator:
+        return Scenario.KeyPerformanceIndicator.FRAMES_ALIVE
 
-    def get_action_space(self) -> Space:
+    def get_multi_action_space(self) -> MultiDiscrete:
         return MultiDiscrete([
             3,  # noop, turn left, turn right
             2,  # noop, forward
@@ -46,5 +49,6 @@ class HealthGathering(Scenario):
         ])
 
 
+# TODO Deprecate
 class HGGameVariable(Enum):
     HEALTH = 0

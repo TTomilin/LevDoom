@@ -44,10 +44,6 @@ class RecorderCallback(BaseCallback):
         self.evaluations_results = []
         self.evaluations_timesteps = []
         self.evaluations_length = []
-        self.evaluations_health = []
-        self.evaluations_kill_count = []
-        self.evaluations_ammo_used = []
-        self.evaluations_movement = []
 
     def _on_step(self):
         # Add additional statistics
@@ -62,22 +58,25 @@ class RecorderCallback(BaseCallback):
                         continue
                     self.logger.record(f'rollout/{stats}', statistics[stats])
 
-        # Evaluate agent
+        # Evaluate agent after a certain frequency
         if not self.n_calls % self._eval_freq:
             screens = []
 
             def log_values(_locals: Dict[str, Any], _globals: Dict[str, Any]) -> None:
+                """
+                Logs additional statistics stored in the info buffer during policy evaluation
+                :param _locals: A dictionary containing all local variables of the callback's scope
+                :param _globals: A dictionary containing all global variables of the callback's scope
+                """
                 # TODO Implement for all potential environments
                 scenario = self._eval_env.envs[0]
                 infos = self._eval_env.buf_infos[0]
-                # scenario.store_eval_statistics(infos)
                 if self._eval_env.buf_dones[0]:
                     scenario.log_evaluation(self.logger, infos)
 
             def grab_screens(_locals: Dict[str, Any], _globals: Dict[str, Any]) -> None:
                 """
                 Renders the environment in its current state, recording the screen in the captured `screens` list
-
                 :param _locals: A dictionary containing all local variables of the callback's scope
                 :param _globals: A dictionary containing all global variables of the callback's scope
                 """

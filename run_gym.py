@@ -6,18 +6,18 @@ import os
 from enum import Enum
 
 import tensorflow as tf
-from stable_baselines3 import DQN, PPO
+from stable_baselines3 import PPO, A2C
 from stable_baselines3.common.cmd_util import make_vec_env
+from stable_baselines3.common.policies import ActorCriticCnnPolicy
 
 from callbacks import RecorderCallback
 from config import argparser
 from env import DefendTheCenter, HealthGathering, SeekAndKill, DodgeProjectiles
-from util import get_input_shape
 
 
 class Algorithm(Enum):
+    A2C = A2C
     PPO = PPO
-    DQN = DQN
 
 
 class Scenario(Enum):
@@ -45,11 +45,10 @@ if __name__ == "__main__":
     if 'GVizDoom' not in root_dir:
         root_dir += '/GVizDoom'  # Fix for external script executor
 
-    # Determine the model
+    # Determine the algorithm
     if args.algorithm.upper() not in Algorithm._member_names_:
         raise ValueError(f'Unknown algorithm provided: `{args.algorithm}`')
-    alg_name = args.algorithm.lower()
-    algorithm = Algorithm[alg_name.upper()].value
+    algorithm = Algorithm[args.algorithm.upper()].value
 
     # Determine the scenario
     if args.scenario.upper() not in Scenario._member_names_:
@@ -69,13 +68,10 @@ if __name__ == "__main__":
 
     extra_stats = env.statistics_fields
 
-    # Define the state and action space
-    action_size = env.game.get_available_buttons_size()
-    state_size = get_input_shape(alg_name, args.frame_width, args.frame_height)
-
     # Create game instances for every task
     obs = env.reset()
 
+    # TODO Extend for multiple environments
     env = make_vec_env(lambda: env, n_envs=args.n_envs, monitor_dir=f"{root_dir}/monitor")
     eval_env = make_vec_env(lambda: eval_env)
 
@@ -83,7 +79,7 @@ if __name__ == "__main__":
     if args.load_model:
         agent = algorithm.load(f"{root_dir}/models", env=env, device=args.device)
     else:
-        agent = algorithm('MlpPolicy', env, verbose=1, device=args.device, ent_coef=0.01,
+        agent = algorithm(ActorCriticCnnPolicy, env, verbose=1, device=args.device, ent_coef=args.ent_coef,
                           tensorboard_log=f"{root_dir}/logs/{args.scenario}/{args.algorithm}/")
 
     # Train the agent

@@ -5,7 +5,6 @@ from typing import Dict, List, Any
 
 import skimage
 import skimage.transform
-from Cython.Utils import OrderedSet
 from gym import Space
 from gym.spaces import Discrete, Box, MultiDiscrete
 from stable_baselines3.common.logger import Logger
@@ -60,10 +59,7 @@ class Scenario(gym.Env):
         FRAMES_ALIVE = auto()
         KILL_COUNT = auto()
 
-    class Task(Enum):
-        DEFAULT = auto()
-
-    def __init__(self, name: str, root_dir: str, task: str, args: Namespace, multi_action: bool):
+    def __init__(self, name: str, root_dir: str, task: str, args: Namespace):
         # Naming
         self.name = name
         self.root_dir = root_dir
@@ -86,11 +82,6 @@ class Scenario(gym.Env):
         self.screen_shape = (args.frame_height, args.frame_width, game.get_screen_channels())
         self.game = game
 
-        # doom_attributes = OrderedSet(map(lambda var: Scenario.DoomAttribute[var.upper()], args.game_vars))
-        # doom_attributes.update(self.scenario_variables)
-        # self.doom_variables = list(map(lambda attr: DoomVariable(attr.name.lower(), attr.value[0][0], attr.value[0][1]),
-        #                                list(doom_attributes)))
-
         # Reassign desired game variables
         self.game.clear_available_game_variables()
         for variable in self.scenario_variables:
@@ -98,7 +89,7 @@ class Scenario(gym.Env):
 
         # Spaces
         self.observation_space = Box(0, 255, self.screen_shape, dtype=np.uint8)
-        self.action_space = self.get_multi_action_space() if multi_action else Discrete(
+        self.action_space = self.get_multi_action_space() if args.multi_action else Discrete(
             len(self.game.get_available_buttons()))
 
         self.game.init()
@@ -111,6 +102,10 @@ class Scenario(gym.Env):
 
         self.state = None
         self.viewer = None
+
+        self.field_indices = {}
+        for index, field in enumerate(self.scenario_variables):
+            self.field_indices[field.name.lower()] = index
 
     @property
     def task_list(self) -> List[str]:
@@ -127,17 +122,16 @@ class Scenario(gym.Env):
         raise NotImplementedError
 
     def get_multi_action_space(self) -> MultiDiscrete:
-        """
-        :return: The multi discrete version of the action space of the scenario
-        """
+        """ Defines a multi discrete version of the action space of the scenario """
         raise NotImplementedError
 
     def log_evaluation(self, logger: Logger, statistics: Dict[str, Any]) -> None:
         """
-        Log scenario specific statistics during evaluation
-        :param statistics: Aggregated info buffer
+        Logs additional scenario specific statistics during evaluation
+        :param logger: The logger instance that connects to the tensorboard and file directory
+        :param statistics: The aggregated info buffer
         """
-        raise NotImplementedError
+        pass
 
     @property
     def config_path(self) -> str:
@@ -160,37 +154,33 @@ class Scenario(gym.Env):
         return []
 
     @property
-    def variable_buffer_size(self) -> int:
-        """ Game variables of the last n iterations; used for reward shaping; default = 2 --> current & previous """
-        return 2
-
-    @property
     def n_spawn_points(self) -> int:
         """ Number of locations where the agent may spawn """
         return 1
 
     @property
     def default_variable_buffer_size(self) -> int:
-        """ Default number of game variables kept in the buffer for reward shaping and storing statistics """
+        """ Default number of game variables kept in the buffer for reward shaping and statistics logging """
         return 2
 
     def shape_reward(self, reward: float) -> float:
         """
-        Implement this method to include scenario specific reward shaping
-        :param reward: The reward from the previous iteration of the game
+        Shapes the reward of each iteration according to the characteristics of the environment
+        :param reward: The reward from the last iteration of the environment
+        :return: The reshaped reward
         """
         return reward
 
-    def get_episode_statistics(self) -> Dict[str, float]:
+    def get_and_clear_episode_statistics(self) -> Dict[str, float]:
         """
-        Implement this method to provide extra scenario specific statistics
-        :return: Dictionary of additional statistics. Empty by default
+        Provides extra scenario specific statistics gathered during an episode and clears them
+        :return: Dictionary of the statistics. Empty by default
         """
         return {}
 
     def display_episode_length(self) -> bool:
         """
-        :return: Boolean indicating whether to display the mean episode length in the statistisc
+        :return: Boolean indicating whether to display the mean episode length in the statistics
         """
         return True
 
@@ -209,7 +199,7 @@ class Scenario(gym.Env):
         reward = self.game.get_last_reward()
         reward = self.shape_reward(reward)
 
-        info = self.get_episode_statistics() if done else {}
+        info = self.get_and_clear_episode_statistics() if done else {}
         return self._collect_observations(), reward, done, info
 
     def reset(self):

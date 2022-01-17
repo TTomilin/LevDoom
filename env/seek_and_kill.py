@@ -2,7 +2,6 @@ from argparse import Namespace
 from typing import List, Dict, Any
 
 import numpy as np
-from aenum import Enum
 from gym.spaces import MultiDiscrete
 from scipy import spatial
 from stable_baselines3.common.logger import Logger
@@ -13,8 +12,8 @@ from env.base import Scenario
 
 class SeekAndKill(Scenario):
 
-    def __init__(self, root_dir: str, task: str, args: Namespace, multi_action=True):
-        super().__init__('seek_and_kill', root_dir, task, args, multi_action)
+    def __init__(self, root_dir: str, task: str, args: Namespace):
+        super().__init__('seek_and_kill', root_dir, task, args)
         self.max_velocity = -np.inf
         self.distance_buffer = []
         self.distance_buffer_eval = []
@@ -23,9 +22,6 @@ class SeekAndKill(Scenario):
         self.traversal_reward_scaler = args.traversal_reward_scaler
         self.health_loss_penalty = args.health_loss_penalty
         self.ammo_used_penalty = args.ammo_used_penalty
-        self.field_indices = {}
-        for index, field in enumerate(self.scenario_variables):
-            self.field_indices[field.name.lower()] = index
 
     @property
     def task_list(self) -> List[str]:
@@ -72,11 +68,11 @@ class SeekAndKill(Scenario):
         ammo_idx = self.field_indices['ammo2']
 
         if current_vars[kc_idx] > previous_vars[kc_idx]:
-            reward += self.kill_reward
+            reward += self.kill_reward  # Elimination of enemy
         if current_vars[health_idx] < previous_vars[health_idx]:
-            reward -= self.health_loss_penalty
+            reward -= self.health_loss_penalty  # Loss of health
         if current_vars[ammo_idx] < previous_vars[ammo_idx]:
-            reward -= self.ammo_used_penalty
+            reward -= self.ammo_used_penalty  # Use of ammunition
             self.ammo_used += 1
 
         return reward
@@ -90,7 +86,7 @@ class SeekAndKill(Scenario):
                        self.game_variable_buffer[0][y_pos]]
         return spatial.distance.euclidean(current_coords, past_coords)
 
-    def get_episode_statistics(self) -> Dict[str, float]:
+    def get_and_clear_episode_statistics(self) -> Dict[str, float]:
         statistics = {'kill_count': self.game_variable_buffer[-1][self.field_indices['killcount']],
                       'health': self.game_variable_buffer[-1][self.field_indices['health']],
                       'ammo_used': self.ammo_used,

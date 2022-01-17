@@ -1,22 +1,26 @@
 from argparse import Namespace
-from typing import List, Dict
+from typing import List, Dict, Any
 
-from aenum import Enum
 from gym.spaces import MultiDiscrete
+from stable_baselines3.common.logger import Logger
+from vizdoom import GameVariable
 
 from env.base import Scenario
 
 
 class DefendTheCenter(Scenario):
     """
-    Scenario in which the agents stands in the center of a circular room
+    Scenario in which the agent stands in the center of a circular room
     with the goal of maximizing its time of survival. The agent is given
     a pistol with a limited amount of ammo to shoot approaching enemies
-    who will invoke damage to agent agent as they reach melee distance.
+    who will invoke damage to the agent as they reach melee distance.
     """
 
-    def __init__(self, root_dir: str, task: str, args: Namespace, multi_action=True):
-        super().__init__('defend_the_center', root_dir, task, args, multi_action)
+    def __init__(self, root_dir: str, task: str, args: Namespace):
+        super().__init__('defend_the_center', root_dir, task, args)
+        self.kill_reward = args.kill_reward
+        self.health_loss_penalty = args.health_loss_penalty
+        self.ammo_used_penalty = args.ammo_used_penalty
 
     @property
     def task_list(self) -> List[str]:
@@ -27,27 +31,39 @@ class DefendTheCenter(Scenario):
 
     @property
     def scenario_variables(self) -> List[Scenario.DoomAttribute]:
-        return [Scenario.DoomAttribute.KILLS, Scenario.DoomAttribute.AMMO, Scenario.DoomAttribute.HEALTH]
+        return [GameVariable.KILLCOUNT, GameVariable.AMMO2, GameVariable.HEALTH]
 
     @property
     def statistics_fields(self) -> List[str]:
-        return ['kills', 'ammo', 'health']
+        return ['kill_count', 'ammo_left']  # The order matters
 
     def shape_reward(self, reward: float) -> float:
         if len(self.game_variable_buffer) < 2:
             return reward  # Not enough variables in the buffer
+
         current_vars = self.game_variable_buffer[-1]
         previous_vars = self.game_variable_buffer[-2]
-        if current_vars[DTCGameVariable.AMMO2.value] < previous_vars[DTCGameVariable.AMMO2.value]:
-            reward -= 0.1  # Use of ammunition
-        if current_vars[DTCGameVariable.HEALTH.value] < previous_vars[DTCGameVariable.HEALTH.value]:
-            reward -= 0.1  # Loss of HEALTH
+
+        kc_idx = self.field_indices['killcount']
+        health_idx = self.field_indices['health']
+        ammo_idx = self.field_indices['ammo2']
+
+        if current_vars[kc_idx] > previous_vars[kc_idx]:
+            reward += self.kill_reward  # Elimination of enemy
+        if current_vars[health_idx] < previous_vars[health_idx]:
+            reward -= self.health_loss_penalty  # Loss of health
+        if current_vars[ammo_idx] < previous_vars[ammo_idx]:
+            reward -= self.ammo_used_penalty  # Use of ammunition
+
         return reward
 
-    def get_episode_statistics(self) -> Dict[str, float]:
-        # TODO add average health
-        return {'kills': self.game_variable_buffer[-1][DTCGameVariable.KILL_COUNT.value],
-                'ammo': self.game_variable_buffer[-1][DTCGameVariable.AMMO2.value]}
+    def get_and_clear_episode_statistics(self) -> Dict[str, float]:
+        return {'kill_count': self.game_variable_buffer[-1][self.field_indices['killcount']],
+                'ammo_left': self.game_variable_buffer[-1][self.field_indices['ammo2']]}
+
+    def log_evaluation(self, logger: Logger, statistics: Dict[str, Any]) -> None:
+        logger.record("eval/kill_count", statistics['kill_count'])
+        logger.record("eval/ammo_left", statistics['ammo_left'])
 
     def get_key_performance_indicator(self) -> Scenario.KeyPerformanceIndicator:
         return Scenario.KeyPerformanceIndicator.FRAMES_ALIVE
@@ -57,10 +73,3 @@ class DefendTheCenter(Scenario):
             3,  # noop, turn left, turn right
             2,  # noop, shoot
         ])
-
-
-# TODO Deprecate
-class DTCGameVariable(Enum):
-    KILL_COUNT = 0
-    AMMO2 = 1
-    HEALTH = 2

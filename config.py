@@ -52,6 +52,10 @@ def argparser() -> argparse.Namespace:
         '--batch-size', type=int, default=64,
         help='Number of samples in a single training batch'
     )
+    parser.add_argument(
+        '--ent-coef', type=float, default=0.01,
+        help='Scalar for the entropy loss'
+    )
 
     # Model
     parser.add_argument(
@@ -133,11 +137,19 @@ def argparser() -> argparse.Namespace:
         '--log-name', type=str, default='Train',
         help='Name of the experiment'
     )
+    parser.add_argument(
+        '--multi-action', type=bool_type, default=False,
+        help='Enable the agent to use multiple actions in parallel'
+    )
 
     # Reward shaping
     parser.add_argument(
         '--kill_reward', type=float, default=1.0,
         help='Reward for eliminating an enemy'
+    )
+    parser.add_argument(
+        '--health-acquired-reward', type=float, default=1.0,
+        help='Reward for obtaining health'
     )
     parser.add_argument(
         '--traversal-reward-scaler', type=float, default=1e-3,

@@ -6,7 +6,6 @@ from typing import List, Dict
 
 import numpy as np
 
-
 task_dict = {
     'defend_the_center': {
         0: ['default'],
@@ -17,7 +16,8 @@ task_dict = {
     },
     'health_gathering': {
         0: ['default'],
-        1: ['lava', 'slime', 'supreme', 'poison', 'obstacles', 'stimpacks', 'shaded_kits', 'water', 'resized_kits', 'short_agent'],
+        1: ['lava', 'slime', 'supreme', 'poison', 'obstacles', 'stimpacks', 'shaded_kits', 'water', 'resized_kits',
+            'short_agent'],
         2: ['slimy_obstacles', 'shaded_stimpacks', 'supreme_poison'],
         3: ['poison_resized_shaded_kits', 'obstacles_slime_stimpacks', 'lava_supreme_short_agent'],
         4: ['complete']
@@ -41,11 +41,11 @@ task_dict = {
     }
 }
 
-
 level_dict = {
     'defend_the_center': {
         'default': 0,
-        'gore': 1, 'stone_wall': 1, 'fast_enemies': 1, 'mossy_bricks': 1, 'fuzzy_enemies': 1, 'flying_enemies': 1, 'resized_enemies': 1,
+        'gore': 1, 'stone_wall': 1, 'fast_enemies': 1, 'mossy_bricks': 1, 'fuzzy_enemies': 1, 'flying_enemies': 1,
+        'resized_enemies': 1,
         'gore_mossy_bricks': 2, 'resized_fuzzy_enemies': 2, 'stone_wall_flying_enemies': 2,
         'resized_flying_enemies_mossy_bricks': 3, 'gore_stone_wall_fuzzy_enemies': 3, 'fast_resized_enemies_gore': 3,
         'complete': 4
@@ -69,12 +69,12 @@ level_dict = {
     'dodge_projectiles': {
         'default': 0,
         'barons': 1, 'mancubus': 1, 'flames': 1, 'cacodemons': 1, 'resized_agent': 1, 'flaming_skulls': 1, 'city': 1,
-        'revenants': 2, 'arachnotron': 2, 'city_resized_agent': 2, 'barons_flaming_skulls': 2, 'cacodemons_flames': 2, 'mancubus_resized_agent': 2,
+        'revenants': 2, 'arachnotron': 2, 'city_resized_agent': 2, 'barons_flaming_skulls': 2, 'cacodemons_flames': 2,
+        'mancubus_resized_agent': 2,
         'flames_flaming_skulls_mancubus': 3, 'resized_agent_revenants': 3, 'city_arachnotron': 3,
         'complete': 4
     }
 }
-
 
 metrics = {
     'defend_the_center': 'frames_alive',
@@ -83,7 +83,6 @@ metrics = {
     'dodge_projectiles': 'frames_alive'
 }
 
-
 multipliers_train = {
     'defend_the_center': 2,
     'health_gathering': 4,
@@ -91,14 +90,12 @@ multipliers_train = {
     'dodge_projectiles': 4
 }
 
-
 multipliers_eval = {
     'defend_the_center': 4,
     'health_gathering': 4,
     'seek_and_kill': 1,
     'dodge_projectiles': 4
 }
-
 
 ranges = {
     'seek_and_kill': {
@@ -121,7 +118,6 @@ ranges = {
     }
 }
 
-
 upper_bounds = {
     'defend_the_center': 1000,
     'health_gathering': 2100,
@@ -136,7 +132,8 @@ def generate_data(scenario: str, num_models: int, task: str):
     return data
 
 
-def level_data_train(scenario: str, protocol: str, levels: List[int], seeds: List[str], n_last_datapoints: int, multi: bool):
+def level_data_train(scenario: str, protocol: str, levels: List[int], seeds: List[str], n_last_datapoints: int,
+                     multi: bool):
     log_dir = '../statistics'
     level_data = {}
     n_data_points = 20 if multi else 40
@@ -168,7 +165,8 @@ def level_data_train(scenario: str, protocol: str, levels: List[int], seeds: Lis
     return level_data
 
 
-def level_data_test(scenario: str, test_levels: List[int], method: str, protocol: str, seeds: List[str], n_last_datapoints: int):
+def level_data_test(scenario: str, test_levels: List[int], method: str, protocol: str, seeds: List[str],
+                    n_last_datapoints: int):
     # tasks = os.listdir('../statistics/{}/test/{}'.format(scenario, method))
     level_data = {}
     multiplier = multipliers_eval[scenario]
@@ -184,7 +182,7 @@ def level_data_test(scenario: str, test_levels: List[int], method: str, protocol
     return level_data
 
 
-def load_seed(scenario: str, method: str, task: str, protocol: str, seed: str, n_last_datapoints: int, num_models = 20):
+def load_seed(scenario: str, method: str, task: str, protocol: str, seed: str, n_last_datapoints: int, num_models=20):
     if 'dqn' == method and ('seek_and_kill' == scenario or 'dodge_projectiles' == scenario):
         return generate_data(scenario, num_models, task)
     if method == 'dqn':
@@ -203,7 +201,7 @@ def load_seed(scenario: str, method: str, task: str, protocol: str, seed: str, n
     return data_y
 
 
-def normalize_mean_scores(data: [], gen_scores: [], scenario: str, level = None):
+def normalize_mean_scores(data: [], gen_scores: [], scenario: str, level=None):
     mean_data = np.nanmean(data)
     gen_score = mean_data / upper_bounds[scenario] * 100
     gen_scores.append(gen_score)
@@ -212,9 +210,9 @@ def normalize_mean_scores(data: [], gen_scores: [], scenario: str, level = None)
     return gen_score, mean_data
 
 
-def calculate_index(scenarios = list(upper_bounds.keys()), protocol = 'multi_half', method = 'rainbow',
-                    train_levels = [], test_levels = [2, 3, 4], seeds = ['_1111', '_2222', '_3333'],
-                    n_last_datapoints = 5, separate_levels = False, multi_train = True):
+def calculate_index(scenarios=list(upper_bounds.keys()), protocol='multi_half', method='rainbow',
+                    train_levels=[], test_levels=[2, 3, 4], seeds=['_1111', '_2222', '_3333'],
+                    n_last_datapoints=5, separate_levels=False, multi_train=True):
     scenario_data = []
     levels = train_levels + test_levels
     print(f'Protocol: {protocol}, method: {method}')
@@ -243,7 +241,7 @@ def calculate_index(scenarios = list(upper_bounds.keys()), protocol = 'multi_hal
             normalize_mean_scores(data, gen_scores, scenario)
 
     if separate_levels:
-        level_avgs = np.mean(scenario_data, axis = 0)
+        level_avgs = np.mean(scenario_data, axis=0)
         for level, avg in zip(levels, level_avgs):
             print(f'Level {level} Average: {avg:.2f}')
         print(f'Overall Avg Gen: {np.mean(level_avgs):.2f}')
@@ -252,7 +250,6 @@ def calculate_index(scenarios = list(upper_bounds.keys()), protocol = 'multi_hal
 
 
 if __name__ == '__main__':
-
     # Training difficulty
     # calculate_index(train_levels = [0, 1, 2, 3, 4], test_levels = [], n_last_datapoints = 50,
     #                 separate_levels = True, multi_train = False, seeds = ['', '_1111', '_2222', '_3333'])
@@ -267,4 +264,5 @@ if __name__ == '__main__':
     # calculate_index(method = 'rainbow')
 
     # Rainbow evaluation
-    calculate_index(method = 'rainbow', protocol = 'multi_SEED', train_levels = [0, 1], n_last_datapoints = 5, separate_levels = True)
+    calculate_index(method='rainbow', protocol='multi_SEED', train_levels=[0, 1], n_last_datapoints=5,
+                    separate_levels=True)

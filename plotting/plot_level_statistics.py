@@ -6,7 +6,6 @@ import numpy as np
 from matplotlib import pyplot as plt
 from scipy.ndimage import gaussian_filter1d
 
-
 task_dict = {
     'defend_the_center': {
         0: ['default'],
@@ -17,7 +16,8 @@ task_dict = {
     },
     'health_gathering': {
         0: ['default'],
-        1: ['lava', 'slime', 'supreme', 'poison', 'obstacles', 'stimpacks', 'shaded_kits', 'water', 'resized_kits', 'resized_agent'],
+        1: ['lava', 'slime', 'supreme', 'poison', 'obstacles', 'stimpacks', 'shaded_kits', 'water', 'resized_kits',
+            'resized_agent'],
         2: ['slimy_obstacles', 'shaded_stimpacks', 'supreme_poison'],
         3: ['poison_resized_shaded_kits', 'obstacles_slime_stimpacks', 'lava_supreme_short_agent'],
         4: ['complete']
@@ -37,7 +37,6 @@ task_dict = {
         4: ['complete']
     }
 }
-
 
 level_dict = {
     'defend_the_center': {
@@ -74,7 +73,6 @@ level_dict = {
     }
 }
 
-
 metrics = {
     'defend_the_center': 'frames_alive',
     'health_gathering': 'frames_alive',
@@ -82,14 +80,12 @@ metrics = {
     'dodge_projectiles': 'frames_alive'
 }
 
-
 multipliers = {
     'defend_the_center': 4,
     'health_gathering': 4,
     'seek_and_kill': 1,
     'dodge_projectiles': 4
 }
-
 
 protocols = {
     'defend_the_center': 'SEED',
@@ -99,7 +95,7 @@ protocols = {
 }
 
 
-def level_data_train(scenario: str, seeds: List[str], levels = [0, 1]):
+def level_data_train(scenario: str, seeds: List[str], levels=[0, 1]):
     level_data = {}
     n_data_points = 20
     multiplier = multipliers[scenario]
@@ -141,7 +137,7 @@ def level_data_test(scenario: str, method: str, seeds: List[int]):
     return level_data
 
 
-def load_seed(log_dir: str, scenario: str, task: str, seed: int, num_models = 20):
+def load_seed(log_dir: str, scenario: str, task: str, seed: int, num_models=20):
     protocol = protocols[scenario]
     data_y = []
     for i in range(num_models):
@@ -155,7 +151,8 @@ def load_seed(log_dir: str, scenario: str, task: str, seed: int, num_models = 20
     return data_y
 
 
-def plot_scenarios(scenarios = list(level_dict.keys()), method = 'rainbow', levels = [0, 1, 2, 3, 4], train_seeds = ['', '_1111', '_2222', '_3333'], test_seeds = [1111, 2222, 3333]):
+def plot_scenarios(scenarios=list(level_dict.keys()), method='rainbow', levels=[0, 1, 2, 3, 4],
+                   train_seeds=['', '_1111', '_2222', '_3333'], test_seeds=[1111, 2222, 3333]):
     plt.rcParams.update({'font.size': 13})
     for scenario in scenarios:
         train_data = level_data_train(scenario, train_seeds)
@@ -167,18 +164,18 @@ def plot_scenarios(scenarios = list(level_dict.keys()), method = 'rainbow', leve
             x = np.arange(20) * 10
             data = level_data[level]
             data = [item for sublist in data for item in sublist]
-            y = np.nanmean(data, axis = 0)
-            y = gaussian_filter1d(y, sigma = 0.5)
+            y = np.nanmean(data, axis=0)
+            y = gaussian_filter1d(y, sigma=0.5)
 
-            plt.plot(x, y, label = f'Level {level}')
-            upper = y - 1.96 * np.nanstd(data, axis = 0) / np.sqrt(30)
-            lower = y + 1.96 * np.nanstd(data, axis = 0) / np.sqrt(30)
-            plt.fill_between(x, upper, lower, alpha = 0.5)
+            plt.plot(x, y, label=f'Level {level}')
+            upper = y - 1.96 * np.nanstd(data, axis=0) / np.sqrt(30)
+            lower = y + 1.96 * np.nanstd(data, axis=0) / np.sqrt(30)
+            plt.fill_between(x, upper, lower, alpha=0.5)
         plt.title(scenario.replace('_', ' ').title())
         plt.legend()
 
-        plt.xlabel('Timesteps (K)', fontsize = 16)
-        plt.ylabel('Score', fontsize = 16)
+        plt.xlabel('Timesteps (K)', fontsize=16)
+        plt.ylabel('Score', fontsize=16)
         plt.savefig(f'../plots/{scenario}/Levels_Rainbow.png')
         plt.show()
 

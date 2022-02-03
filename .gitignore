@@ -17,11 +17,11 @@
 /plots/
 /statistics/
 /examples/
-/utils/convnet_fig.png
+/plotting/convnet_fig.png
 /training/c51_ddqn.py
 /training/dfp.py
 /training/drqn.py
-/utils/plot_statistics.py
+/plotting/plot_statistics.py
 /.idea
 
 # Byte-compiled / optimized / DLL files
@@ -125,16 +125,7 @@ celerybeat-schedule
 celerybeat.pid
 
 # SageMath parsed files
-*.sage.py
-
-# Environments
-.env
-.venv
-env/
-venv/
-ENV/
-env.bak/
-venv.bak/
+.sage.py
 
 # Spyder project settings
 .spyderproject

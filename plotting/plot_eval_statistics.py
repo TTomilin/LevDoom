@@ -18,7 +18,8 @@ class PlotType(Enum):
 level_dict = {
     'defend_the_center': {
         'default': 0,
-        'gore': 1, 'stone_wall': 1, 'fast_enemies': 1, 'mossy_bricks': 1, 'fuzzy_enemies': 1, 'flying_enemies': 1, 'resized_enemies': 1,
+        'gore': 1, 'stone_wall': 1, 'fast_enemies': 1, 'mossy_bricks': 1, 'fuzzy_enemies': 1, 'flying_enemies': 1,
+        'resized_enemies': 1,
         'gore_mossy_bricks': 2, 'resized_fuzzy_enemies': 2, 'stone_wall_flying_enemies': 2,
         'resized_flying_enemies_mossy_bricks': 3, 'gore_stone_wall_fuzzy_enemies': 3, 'fast_resized_enemies_gore': 3,
         'complete': 4
@@ -42,12 +43,12 @@ level_dict = {
     'dodge_projectiles': {
         'default': 0,
         'barons': 1, 'mancubus': 1, 'flames': 1, 'cacodemons': 1, 'resized_agent': 1, 'flaming_skulls': 1, 'city': 1,
-        'revenants': 2, 'arachnotron': 2, 'city_resized_agent': 2, 'barons_flaming_skulls': 2, 'cacodemons_flames': 2, 'mancubus_resized_agent': 2,
+        'revenants': 2, 'arachnotron': 2, 'city_resized_agent': 2, 'barons_flaming_skulls': 2, 'cacodemons_flames': 2,
+        'mancubus_resized_agent': 2,
         'flames_flaming_skulls_mancubus': 3, 'resized_agent_revenants': 3, 'city_arachnotron': 3,
         'complete': 4
     }
 }
-
 
 metrics = {
     'defend_the_center': 'frames_alive',
@@ -56,14 +57,12 @@ metrics = {
     'dodge_projectiles': 'frames_alive'
 }
 
-
 multipliers = {
     'defend_the_center': 4,
     'health_gathering': 4,
     'seek_and_kill': 1,
     'dodge_projectiles': 4
 }
-
 
 ranges = {
     'seek_and_kill': {
@@ -92,7 +91,7 @@ def order_tasks_by_levels(tasks: List[str], scenario: str) -> List[str]:
     task_dict = {}
     for task in tasks:
         task_dict[task] = levels[task]
-    return list(collections.OrderedDict(sorted(task_dict.items(), key = lambda item: item[1])).keys())
+    return list(collections.OrderedDict(sorted(task_dict.items(), key=lambda item: item[1])).keys())
 
 
 def generate_data(scenario: str, task: str, num_models: int):
@@ -129,22 +128,22 @@ def get_label(plot_type: PlotType, protocol: str, method: str) -> str:
         return '8 Tasks'
 
 
-def plot_evaluation(plot_type: PlotType, methods: List[str], protocols: List[str], seeds = [1111, 2222, 3333],
-                   scenarios = ['defend_the_center', 'health_gathering', 'seek_and_kill', 'dodge_projectiles']):
+def plot_evaluation(plot_type: PlotType, methods: List[str], protocols: List[str], seeds=[1111, 2222, 3333],
+                    scenarios=['defend_the_center', 'health_gathering', 'seek_and_kill', 'dodge_projectiles']):
     n_data_points = 20
     rows = 7
     cols = len(scenarios)
     img_dims = (14, 20)
-    fig, ax = plt.subplots(rows, cols, figsize = img_dims)
-    main_ax = fig.add_subplot(111, frameon = False)
+    fig, ax = plt.subplots(rows, cols, figsize=img_dims)
+    main_ax = fig.add_subplot(111, frameon=False)
     main_ax.get_xaxis().set_ticks([])
     main_ax.get_yaxis().set_ticks([])
-    plt.subplots_adjust(hspace = 0.4)
+    plt.subplots_adjust(hspace=0.4)
     plt.rcParams.update({'font.size': 13})
     plt_id = 1
     for j, scenario in enumerate(scenarios):
-        col_ax = fig.add_subplot(1, cols, j + 1, frameon = False)
-        col_ax.set_title(scenario.replace('_', ' ').title() + '\n', fontsize = 22)
+        col_ax = fig.add_subplot(1, cols, j + 1, frameon=False)
+        col_ax.set_title(scenario.replace('_', ' ').title() + '\n', fontsize=22)
         col_ax.get_xaxis().set_ticks([])
         col_ax.get_yaxis().set_ticks([])
         tasks = os.listdir(f'../statistics/{scenario}/test/{methods[0]}/')
@@ -160,22 +159,22 @@ def plot_evaluation(plot_type: PlotType, methods: List[str], protocols: List[str
                         seed_data.append(data)
 
                     x = np.arange(n_data_points) * 10
-                    y = np.nanmean(seed_data, axis = 0)
-                    y = gaussian_filter1d(y, sigma = 0.5)
+                    y = np.nanmean(seed_data, axis=0)
+                    y = gaussian_filter1d(y, sigma=0.5)
 
-                    ax[i, j].plot(x, y, label = get_label(type, protocol, method))
-                    upper = y - 1.96 * np.std(seed_data, axis = 0) / np.sqrt(30)
-                    lower = y + 1.96 * np.std(seed_data, axis = 0) / np.sqrt(30)
-                    ax[i, j].fill_between(x, upper, lower, alpha = 0.5)
-                    ax[i, j].set_title(task.replace('_', ' ').title(), fontsize = 13)
+                    ax[i, j].plot(x, y, label=get_label(type, protocol, method))
+                    upper = y - 1.96 * np.std(seed_data, axis=0) / np.sqrt(30)
+                    lower = y + 1.96 * np.std(seed_data, axis=0) / np.sqrt(30)
+                    ax[i, j].fill_between(x, upper, lower, alpha=0.5)
+                    ax[i, j].set_title(task.replace('_', ' ').title(), fontsize=13)
                     plt_id += 1
 
-    main_ax.set_xlabel('\nTimesteps (K)', fontsize = 36)
-    main_ax.set_ylabel('Score\n', fontsize = 36)
-    plt.tick_params(labelcolor = 'none', top = False, bottom = False, left = False, right = False)
+    main_ax.set_xlabel('\nTimesteps (K)', fontsize=36)
+    main_ax.set_ylabel('Score\n', fontsize=36)
+    plt.tick_params(labelcolor='none', top=False, bottom=False, left=False, right=False)
     plt.grid(False)
     handles, labels = ax[0, 0].get_legend_handles_labels()
-    plt.legend(handles = handles, loc = 'lower right', prop = {'size': 22}, bbox_to_anchor = (1.0, -0.1))
+    plt.legend(handles=handles, loc='lower right', prop={'size': 22}, bbox_to_anchor=(1.0, -0.1))
     plt.savefig(f'../plots/{plot_type.value}.png')
     plt.show()
 

@@ -63,7 +63,6 @@ class Scenario(gym.Env):
         # Naming
         self.name = name
         self.root_dir = root_dir
-        self.name_addition = args.model_name_addition
 
         # Tasks
         self.n_tasks = len(args.tasks)

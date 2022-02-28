@@ -1,6 +1,6 @@
-# GVizDoom
+# LevDoom
 
-GVizDoom is a benchmark intended for research in generalization of deep reinforcement learning agents. The benchmark is
+LevDoom is a benchmark intended for research in generalization of deep reinforcement learning agents. The benchmark is
 built upon [ViZDoom](https://github.com/mwydmuch/ViZDoom), which is addressed to pixel based learning in the FPS game
 domain.
 
@@ -10,8 +10,8 @@ domain.
 - Clone and install the project
 
 ```
-- git clone https://github.com/TTomilin/GVizDoom
-- pip3 install -e ./GVizDoom
+- git clone https://github.com/TTomilin/LevDoom
+- pip3 install -e ./LevDoom
 ```
 
 ## Algorithms

@@ -28,8 +28,6 @@ The current implementation consists of 4 unique scenarios, each with numerous ta
 
 ### Defend the Center
 
-[Video](https://www.youtube.com/watch?v=hbGCBlBNUik&t=39s)
-
 * Level 0
     * Default
 * Level 1
@@ -53,8 +51,6 @@ The current implementation consists of 4 unique scenarios, each with numerous ta
 
 #### Health Gathering
 
-[Video](https://www.youtube.com/watch?v=13-rBxaoWFE&t=4s)
-
 * Level 1
     * Default
     * Lava
@@ -77,8 +73,6 @@ The current implementation consists of 4 unique scenarios, each with numerous ta
     * Complete
 
 #### Seek and Kill
-
-[Video](https://www.youtube.com/watch?v=6POupU974u4&t=109s)
 
 * Level 0
     * Default
@@ -105,8 +99,6 @@ The current implementation consists of 4 unique scenarios, each with numerous ta
     * Complete
 
 #### Dodge Projectiles
-
-[Video](https://www.youtube.com/watch?v=nh4_FW0ebRY)
 
 * Level 0
     * Default

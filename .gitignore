@@ -1,29 +1,3 @@
-/bots.cfg
-/CMakeLists.txt
-/Dockerfile
-/fmodex64.dll
-/freedoom2.wad
-/libmpg123-0.dll
-/libsndfile-1.dll
-/map_edit_regex.txt
-/skulltag_data.pk3
-/vizdoom.exe
-/vizdoom.pk3
-/vizdoom.pyd
-/vizdoom-trist.ini
-/acc158win/
-/experience/
-/models/
-/plots/
-/statistics/
-/examples/
-/plotting/convnet_fig.png
-/training/c51_ddqn.py
-/training/dfp.py
-/training/drqn.py
-/plotting/plot_statistics.py
-/.idea
-
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -31,6 +5,9 @@ __pycache__/
 
 # C extensions
 *.so
+
+# .idea folder
+.idea/
 
 # Distribution / packaging
 .Python
@@ -76,6 +53,7 @@ coverage.xml
 *.py,cover
 .hypothesis/
 .pytest_cache/
+cover/
 
 # Translations
 *.mo
@@ -108,7 +86,9 @@ profile_default/
 ipython_config.py
 
 # pyenv
-.python-version
+#   For a library or package, you might want to ignore these files since the code is
+#   intended to run in multiple environments; otherwise, check them in:
+# .python-version
 
 # pipenv
 #   According to pypa/pipenv#598, it is recommended to include Pipfile.lock in version control.
@@ -125,7 +105,15 @@ celerybeat-schedule
 celerybeat.pid
 
 # SageMath parsed files
-.sage.py
+*.sage.py
+
+# Environments
+.env
+.venv
+venv/
+ENV/
+env.bak/
+venv.bak/
 
 # Spyder project settings
 .spyderproject
@@ -144,4 +132,20 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
-/training/tensorforce_agent.py
+
+# pytype static type analyzer
+.pytype/
+
+# customize
+log/
+MUJOCO_LOG.TXT
+*.pth
+.vscode/
+.DS_Store
+*.zip
+*.pstats
+*.swp
+*.pkl
+*.hdf5
+wandb/
+videos/

@@ -1,0 +1,35 @@
+{
+    "os": "Linux-5.13.0-40-generic-x86_64-with-glibc2.34",
+    "python": "3.9.7",
+    "heartbeatAt": "2022-05-17T08:21:31.232170",
+    "startedAt": "2022-05-17T08:21:30.918703",
+    "docker": null,
+    "gpu": "Quadro T1000 with Max-Q Design",
+    "gpu_count": 1,
+    "cpu_count": 12,
+    "cuda": null,
+    "args": [
+        "--scenario",
+        "seek_and_kill",
+        "--step-per-epoch",
+        "10000",
+        "--tasks",
+        "default",
+        "--test_tasks",
+        "resized_enemies",
+        "--wandb_user",
+        "tomilin"
+    ],
+    "state": "running",
+    "program": "/home/tristan/git/LevDoomLab/examples/vizdoom/vizdoom_ppo.py",
+    "codePath": "examples/vizdoom/vizdoom_ppo.py",
+    "git": {
+        "remote": "https://github.com/TTomilin/LevDoomLab.git",
+        "commit": "3937e390f8383fdae34d6d533631cd05343b1bd7"
+    },
+    "email": "tristan.tomilin@hotmail.com",
+    "root": "/home/tristan/git/LevDoomLab",
+    "host": "MonsterPC",
+    "username": "tristan",
+    "executable": "/usr/bin/python3"
+}

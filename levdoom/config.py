@@ -14,8 +14,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument('--eps-test', type=float, default=0.005)
     parser.add_argument('--eps-train', type=float, default=1.)
     parser.add_argument('--eps-train-final', type=float, default=0.05)
-    parser.add_argument('--buffer-size', type=int, default=100000)
-    parser.add_argument('--lr', type=float, default=0.00002)
+    parser.add_argument('--buffer-size', type=int, default=1e5)
+    parser.add_argument('--lr', type=float, default=2e-5)
     parser.add_argument('--alpha', type=float, default=0.6)
     parser.add_argument('--beta', type=float, default=0.4)
     parser.add_argument('--gamma', type=float, default=0.99)
@@ -25,7 +25,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument('--n-step', type=int, default=3)
     parser.add_argument('--target-update-freq', type=int, default=500)
     parser.add_argument('--epoch', type=int, default=300)
-    parser.add_argument('--step-per-epoch', type=int, default=100000)
+    parser.add_argument('--step-per-epoch', type=int, default=1e5)
     parser.add_argument('--step-per-collect', type=int, default=1000)
     parser.add_argument('--repeat-per-collect', type=int, default=4)
     parser.add_argument('--update-per-step', type=float, default=0.1)
@@ -89,7 +89,7 @@ def parse_args() -> argparse.Namespace:
         help='weight for the forward model loss in ICM'
     )
     # WandB
-    parser.add_argument('--with_wandb', default=True, type=bool, help='Enables Weights and Biases')
+    parser.add_argument('--with_wandb', default=False, type=bool, help='Enables Weights and Biases')
     parser.add_argument('--wandb_user', default=None, type=str, help='WandB username (entity).')
     parser.add_argument('--wandb_project', default='LevDoom', type=str, help='WandB "Project"')
     parser.add_argument('--wandb_group', default=None, type=str, help='WandB "Group". Name of the env by default.')

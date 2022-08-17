@@ -149,6 +149,6 @@ MUJOCO_LOG.TXT
 log/
 wandb/
 videos/
-levdoom/log/
-levdoom/wandb/
-levdoom/videos/
+/levdoom/log/
+/levdoom/wandb/
+/levdoom/videos/

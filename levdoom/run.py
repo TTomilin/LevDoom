@@ -4,7 +4,6 @@ import pprint
 import sys
 from argparse import Namespace
 from datetime import datetime
-from enum import Enum
 from functools import partial
 from typing import Type
 
@@ -13,20 +12,13 @@ import torch
 from gym.wrappers import NormalizeObservation, FrameStack
 from tensorboardX import SummaryWriter
 
-from levdoom.algorithm.dqn import DQNImpl
-from levdoom.algorithm.ppo import PPOImpl
-from levdoom.algorithm.rainbow import RainbowImpl
+sys.path.append(os.path.abspath(pathlib.Path(__file__).parent.parent))
+
 from levdoom.config import parse_args
 from levdoom.env.base.scenario import DoomEnv
 from levdoom.utils.enums import DoomScenarioImpl, Algorithm
 from levdoom.utils.wrappers import ResizeWrapper, RescaleWrapper
 
-sys.path.append(os.path.abspath(pathlib.Path(__file__).parent.parent))
-
-from levdoom.env.extended.defend_the_center_impl import DefendTheCenterImpl
-from levdoom.env.extended.dodge_projectiles_impl import DodgeProjectilesImpl
-from levdoom.env.extended.health_gathering_impl import HealthGatheringImpl
-from levdoom.env.extended.seek_and_slay_impl import SeekAndSlayImpl
 from levdoom.utils.wandb import init_wandb
 from tianshou.data.collector import Collector
 from tianshou.env import ShmemVectorEnv

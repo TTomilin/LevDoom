@@ -115,8 +115,6 @@ def train(args: Namespace):
     # Initialize logging
     writer = SummaryWriter(log_path)
     writer.add_text("args", str(args))
-    if args.scenario:
-        args.wandb_group = args.scenario
 
     wandb_id = f'{args.algorithm}_seed_{args.seed}_{timestamp}'
 

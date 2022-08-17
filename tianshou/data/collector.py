@@ -344,12 +344,6 @@ class Collector(object):
             rews = episode_rews[i]
             if not rews:  # Check if any statistics has been collected
                 continue
-            # rews, lens, idxs, infos = list(
-            #     map(
-            #         np.concatenate,
-            #         [episode_rews[i], episode_lens[i], episode_start_indices[i], episode_infos[i]]
-            #     )
-            # )
             lens = episode_lens[i]
             idxs = episode_start_indices[i]
             rew_mean, rew_std = np.mean(rews), np.std(rews)
@@ -366,8 +360,9 @@ class Collector(object):
             infos = episode_infos[i]
 
             for field in self._extra_statistics:
-                self.add_mean_and_std(infos, ep_statistics, field)
-            task = env.args[1]
+                add_mean_and_std(infos, ep_statistics, field)
+            task = env.args[2]  # Hack to get the task name from partial function
+            assert isinstance(task, str), 'Task name must be the 2nd positional argument of the partial function'
             statistics['tasks'][task] = ep_statistics
         task_stats = list(statistics['tasks'].values())
         if task_stats:
@@ -377,11 +372,12 @@ class Collector(object):
             statistics['length_std'] = mean(stats['length_std'] for stats in task_stats)
         return statistics
 
-    def add_mean_and_std(self, infos, ep_statistics, param):
-        if all(param in info for info in infos):
-            values = np.array([infos[i][param] for i in range(len(infos))])
-            ep_statistics[param] = values.mean()
-            ep_statistics[f'{param}_std'] = values.std()
+
+def add_mean_and_std(infos, ep_statistics, param):
+    if all(param in info for info in infos):
+        values = np.array([infos[i][param] for i in range(len(infos))])
+        ep_statistics[param] = values.mean()
+        ep_statistics[f'{param}_std'] = values.std()
 
 
 class AsyncCollector(Collector):

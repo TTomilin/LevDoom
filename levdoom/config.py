@@ -49,47 +49,16 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument('--render', default=False, action='store_true')
     parser.add_argument('--variable_queue_len', type=int, default=5)
     parser.add_argument('--normalize', type=bool, default=True)
-    parser.add_argument(
-        '--device', type=str, default='cuda' if torch.cuda.is_available() else 'cpu'
-    )
-    parser.add_argument('--frame-size', type=int, default=84)
-    parser.add_argument('--frames-stack', type=int, default=4)
-    parser.add_argument('--skip-num', type=int, default=4)
+    parser.add_argument('--device', type=str, default='cuda' if torch.cuda.is_available() else 'cpu')
+    parser.add_argument('--frame-height', type=int, default=84)
+    parser.add_argument('--frame-width', type=int, default=84)
+    parser.add_argument('--frame-stack', type=int, default=4)
+    parser.add_argument('--frame-skip', type=int, default=4)
     parser.add_argument('--resume-path', type=str, default=None)
     parser.add_argument('--save_interval', type=int, default=20)
-    parser.add_argument(
-        '--watch',
-        default=False,
-        action='store_true',
-        help='watch the play of pre-trained policy only'
-    )
-    parser.add_argument(
-        '--save-lmp',
-        default=False,
-        action='store_true',
-        help='save lmp file for replay whole episode'
-    )
-    parser.add_argument('--save-buffer-name', type=str, default=None)
-    parser.add_argument(
-        '--icm-lr-scale',
-        type=float,
-        default=0.,
-        help='use intrinsic curiosity module with this lr scale'
-    )
-    parser.add_argument(
-        '--icm-reward-scale',
-        type=float,
-        default=0.01,
-        help='scaling factor for intrinsic curiosity reward'
-    )
-    parser.add_argument(
-        '--icm-forward-loss-weight',
-        type=float,
-        default=0.2,
-        help='weight for the forward model loss in ICM'
-    )
+    parser.add_argument('--watch', default=False, action='store_true', help='watch the play of pre-trained policy')
     # WandB
-    parser.add_argument('--with_wandb', default=False, type=bool, help='Enables Weights and Biases')
+    parser.add_argument('--with_wandb', default=False, action='store_true', help='Enables Weights and Biases')
     parser.add_argument('--wandb_user', default=None, type=str, help='WandB username (entity).')
     parser.add_argument('--wandb_project', default='LevDoom', type=str, help='WandB "Project"')
     parser.add_argument('--wandb_group', default=None, type=str, help='WandB "Group". Name of the env by default.')

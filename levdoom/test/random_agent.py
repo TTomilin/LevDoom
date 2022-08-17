@@ -21,7 +21,7 @@ def get_args():
     parser.add_argument('--scenario', type=str, default='defend_the_center', help='Scenario to use')
     parser.add_argument('--task', type=str, default='default', help='Task to use')
     parser.add_argument('--max_episodes', type=int, default=10, help='Number of episodes to run')
-    parser.add_argument('--render_sleep', type=float, default=0.1, help='Time to sleep between rendering')
+    parser.add_argument('--render_sleep', type=float, default=0.05, help='Time to sleep between rendering')
     parser.add_argument('--render', type=bool, default=True, help='Whether to render the environment')
     parser.add_argument('--watch', type=bool, default=True, help='Whether to watch the environment')
     parser.add_argument('--frame_height', type=int, default=84, help='Height of the rendered frame')

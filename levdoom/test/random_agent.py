@@ -61,7 +61,7 @@ def run(args: Namespace) -> None:
             if args.render:
                 env.render()
                 time.sleep(args.render_sleep)
-        print(f"Episode {ep} reward: {sum(rewards)}, steps: {steps}")
+        print(f"Episode {ep + 1} finished. Kills: {int(sum(rewards))}. Frames survived: {steps * args.frame_skip}")
     env.close()
 
 

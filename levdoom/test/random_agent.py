@@ -1,19 +1,8 @@
 import time
 from argparse import ArgumentParser, Namespace
-from enum import Enum
 from pathlib import Path
 
-from levdoom.env.base.defend_the_center import DefendTheCenter
-from levdoom.env.base.dodge_projectiles import DodgeProjectiles
-from levdoom.env.base.health_gathering import HealthGathering
-from levdoom.env.base.seek_and_slay import SeekAndSlay
-
-
-class DoomScenario(Enum):
-    DEFEND_THE_CENTER = DefendTheCenter
-    HEALTH_GATHERING = HealthGathering
-    SEEK_AND_SLAY = SeekAndSlay
-    DODGE_PROJECTILES = DodgeProjectiles
+from levdoom.utils.enums import DoomScenario
 
 
 def get_args():

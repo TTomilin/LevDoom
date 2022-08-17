@@ -18,6 +18,7 @@ from levdoom.algorithm.ppo import PPOImpl
 from levdoom.algorithm.rainbow import RainbowImpl
 from levdoom.config import parse_args
 from levdoom.env.base.scenario import DoomEnv
+from levdoom.utils.enums import DoomScenarioImpl, Algorithm
 from levdoom.utils.wrappers import ResizeWrapper, RescaleWrapper
 
 sys.path.append(os.path.abspath(pathlib.Path(__file__).parent.parent))
@@ -30,19 +31,6 @@ from levdoom.utils.wandb import init_wandb
 from tianshou.data.collector import Collector
 from tianshou.env import ShmemVectorEnv
 from tianshou.utils.logger.wandb import WandbLogger
-
-
-class DoomScenario(Enum):
-    DEFEND_THE_CENTER = DefendTheCenterImpl
-    HEALTH_GATHERING = HealthGatheringImpl
-    SEEK_AND_SLAY = SeekAndSlayImpl
-    DODGE_PROJECTILES = DodgeProjectilesImpl
-
-
-class Algorithm(Enum):
-    DQN = DQNImpl
-    PPO = PPOImpl
-    RAINBOW = RainbowImpl
 
 
 def create_single_env(scenario: Type[DoomEnv], args: Namespace, task: str):
@@ -65,7 +53,7 @@ def train(args: Namespace):
     log_path = f'{args.logdir}/{args.algorithm}/{args.scenario}/{args.seed}_{timestamp}'
 
     # Determine scenario and algorithm classes
-    scenario_class = DoomScenario[args.scenario.upper()].value
+    scenario_class = DoomScenarioImpl[args.scenario.upper()].value
     algorithm_class = Algorithm[args.algorithm.upper()].value
 
     args.cfg_path = f"{args.experiment_dir}/maps/{args.scenario}/{args.scenario}.cfg"

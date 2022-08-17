@@ -20,7 +20,7 @@ class DoomEnv(gym.Env):
         self.game.load_config(args.cfg_path)
         self.game.set_doom_scenario_path(f"{args.experiment_dir}/maps/{args.scenario}/{task}.wad")
         self.game.set_window_visible(args.render)
-        if args.watch:  # Use a higher resolution for watching gameplay
+        if args.watch or args.render:  # Use a higher resolution for watching gameplay
             self.game.set_screen_resolution(ScreenResolution.RES_1600X1200)
         self.game.init()
 

@@ -5,9 +5,9 @@ import torch
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description='LevDoom runner')
-    parser.add_argument('--scenario', type=str, default=None,
+    parser.add_argument('--scenario', type=str, default=None, required=True,
                         choices=['defend_the_center', 'health_gathering', 'seek_and_slay', 'dodge_projectiles'])
-    parser.add_argument('--algorithm', type=str, default=None, choices=['dqn', 'ppo', 'rainbow'])
+    parser.add_argument('--algorithm', type=str, default=None, required=True, choices=['dqn', 'ppo', 'rainbow'])
     parser.add_argument('--tasks', type=str, nargs='*', default=['default'])
     parser.add_argument('--test_tasks', type=str, nargs='*', default=['default'])
     parser.add_argument('--seed', type=int, default=0)

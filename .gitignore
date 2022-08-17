@@ -137,7 +137,6 @@ dmypy.json
 .pytype/
 
 # customize
-log/
 MUJOCO_LOG.TXT
 *.pth
 .vscode/
@@ -147,5 +146,9 @@ MUJOCO_LOG.TXT
 *.swp
 *.pkl
 *.hdf5
+log/
 wandb/
 videos/
+levdoom/log/
+levdoom/wandb/
+levdoom/videos/

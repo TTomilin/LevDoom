@@ -21,7 +21,7 @@ class RainbowImpl(DQNImpl):
             beta=self.args.beta,
             ignore_obs_next=True,
             save_only_last_obs=True,
-            stack_num=self.args.frames_stack
+            stack_num=self.args.frame_stack
         )
 
     def init_network(self) -> Module:

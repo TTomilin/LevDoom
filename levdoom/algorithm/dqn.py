@@ -24,7 +24,7 @@ class DQNImpl(BaseImpl):
             buffer_num=n_buffers,
             ignore_obs_next=True,
             save_only_last_obs=True,
-            stack_num=self.args.frames_stack
+            stack_num=self.args.frame_stack
         )
 
     def create_trainer(self, train_collector: Collector, test_collector: Collector, logger: BaseLogger) -> Dict[

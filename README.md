@@ -1,6 +1,8 @@
 # LevDoom
 LevDoom is a benchmark with difficulty levels based on visual modifications, intended for research in generalization of deep reinforcement learning agents. The benchmark is based upon [ViZDoom](https://github.com/mwydmuch/ViZDoom), a platform addressed to pixel based learning in the FPS game domain.
 
+For more details please refer to our [CoG2022](https://ieee-cog.org/2022/assets/papers/paper_30.pdf) paper.
+
 ![Default](gifs/scenarios.gif)
 
 ## Installation

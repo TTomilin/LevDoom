@@ -70,7 +70,7 @@ class SeekAndSlayImpl(SeekAndSlay):
         for t in t_left_right:
             for m in m_forward:
                 for a in attack:
-                    if self.add_speed:
+                    if self.add_speed and m == [1.0]:
                         for s in speed:
                             actions.append(t + m + a + s)
                     else:

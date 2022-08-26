@@ -33,7 +33,7 @@ class HealthGatheringImpl(HealthGathering):
         t_left_right = [[0.0, 0.0], [0.0, 1.0], [1.0, 0.0]]
         for m in m_forward:
             for t in t_left_right:
-                if self.add_speed:
+                if self.add_speed and m == [1.0]:
                     for s in speed:
                         actions.append(t + m + s)
                 else:

@@ -5,7 +5,7 @@ from typing import Dict, Tuple, Any, List
 import gym
 import numpy as np
 import vizdoom as vzd
-from vizdoom import ScreenResolution
+from vizdoom import ScreenResolution, Button
 
 
 class DoomEnv(gym.Env):
@@ -22,6 +22,10 @@ class DoomEnv(gym.Env):
         self.game.set_window_visible(args.render)
         if args.watch or args.render:  # Use a higher resolution for watching gameplay
             self.game.set_screen_resolution(ScreenResolution.RES_1600X1200)
+        if args.add_speed:  # Add SPEED action to the available in-game actions
+            actions = self.game.get_available_buttons()
+            actions.append(Button.SPEED)
+            self.game.set_available_buttons(actions)
         self.game.init()
 
         # Initialize and fill the game variable queue

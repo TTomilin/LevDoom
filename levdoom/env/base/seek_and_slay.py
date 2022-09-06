@@ -1,4 +1,5 @@
 from argparse import Namespace
+from typing import List
 
 from levdoom.env.base.scenario import DoomEnv
 
@@ -14,11 +15,10 @@ class SeekAndSlay(DoomEnv):
     """
 
     def __init__(self, args: Namespace, task: str, kill_reward=1.0):
-        self.add_speed = args.add_speed
         self.kill_reward = kill_reward
         super().__init__(args, task)
 
-    def get_available_actions(self):
+    def get_available_actions(self) -> List[List[float]]:
         actions = []
         m_forward = [[0.0], [1.0]]
         t_left_right = [[0.0, 0.0], [0.0, 1.0], [1.0, 0.0]]

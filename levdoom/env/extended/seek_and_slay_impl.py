@@ -1,5 +1,5 @@
 from argparse import Namespace
-from typing import Dict
+from typing import Dict, List
 
 import numpy as np
 from scipy import spatial
@@ -17,10 +17,6 @@ class SeekAndSlayImpl(SeekAndSlay):
         self.traversal_reward_scaler = args.traversal_reward_scaler
         self.health_loss_penalty = args.health_loss_penalty
         self.ammo_used_penalty = args.ammo_used_penalty
-
-    @property
-    def n_spawn_points(self) -> int:
-        return 11
 
     def calc_reward(self) -> float:
         reward = super().calc_reward()
@@ -60,7 +56,7 @@ class SeekAndSlayImpl(SeekAndSlay):
         self.hits_taken = 0
         self.distance_buffer.clear()
 
-    def get_available_actions(self):
+    def get_available_actions(self) -> List[List[float]]:
         actions = []
         m_forward = [[0.0], [1.0]]
         t_left_right = [[0.0, 0.0], [0.0, 1.0], [1.0, 0.0]]

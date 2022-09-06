@@ -1,5 +1,5 @@
 from argparse import Namespace
-from typing import Dict
+from typing import Dict, List
 
 from levdoom.env.base.health_gathering import HealthGathering
 
@@ -9,6 +9,7 @@ class HealthGatheringImpl(HealthGathering):
     def __init__(self, args: Namespace, task: str):
         super().__init__(args, task)
         self.health_acquired_reward = args.health_acquired_reward
+        self.add_speed = args.add_speed
         self.kits_obtained = 0
 
     def calc_reward(self) -> float:
@@ -26,7 +27,7 @@ class HealthGatheringImpl(HealthGathering):
     def clear_episode_statistics(self):
         self.kits_obtained = 0
 
-    def get_available_actions(self):
+    def get_available_actions(self) -> List[List[float]]:
         actions = []
         speed = [[0.0], [1.0]]
         m_forward = [[0.0], [1.0]]

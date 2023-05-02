@@ -59,7 +59,7 @@ def save_pickle(file_name, data):
 if __name__ == '__main__':
     args = parser.parse_args()
     cur_group = args.group_name
-    logdir = '../logs'
+    logdir = 'logs'
     algos = ['dqn', 'rainbow', 'ppo']
     os.makedirs('data/{}'.format(cur_group), exist_ok=True)
     # extract the information

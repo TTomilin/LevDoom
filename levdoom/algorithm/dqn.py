@@ -40,7 +40,6 @@ class DQNImpl(BaseImpl):
             self.args.batch_size,
             train_fn=self.train_fn,
             test_fn=self.test_fn,
-            stop_fn=self.stop_fn,
             save_best_fn=self.save_best_fn,
             save_policy_fn=self.save_policy_fn,
             save_interval=self.args.save_interval,

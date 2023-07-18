@@ -41,7 +41,6 @@ class PPOImpl(BaseImpl):
             self.args.test_num,
             self.args.batch_size,
             step_per_collect=self.args.step_per_collect,
-            stop_fn=self.stop_fn,
             save_best_fn=self.save_best_fn,
             save_policy_fn=self.save_policy_fn,
             save_interval=self.args.save_interval,

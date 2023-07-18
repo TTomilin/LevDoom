@@ -49,6 +49,3 @@ class BaseImpl(ABC):
 
     def save_policy_fn(self, policy, env_step):
         torch.save(policy.state_dict(), f'{self.log_path}/policy_{env_step}.pth')
-
-    def stop_fn(self, mean_rewards):
-        return mean_rewards >= self.env.spec.reward_threshold if self.env.spec.reward_threshold else False

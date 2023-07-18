@@ -14,6 +14,7 @@ class DoomEnv(gym.Env):
         super().__init__()
         self.name = task
         self.frame_skip = args.frame_skip
+        self.add_speed = args.add_speed
 
         # Create the Doom game instance
         self.game = vzd.DoomGame()

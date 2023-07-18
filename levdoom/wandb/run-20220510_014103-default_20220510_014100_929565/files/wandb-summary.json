@@ -1,1 +1,0 @@
-{"global_step": 58000, "_timestamp": 1652139820.279916, "test/env_step": 0.0, "test/reward": 0.3799999952316284, "test/length": 99.01000213623047, "test/reward_std": 1.2132600545883179, "test/length_std": 23.487653732299805, "_runtime": 157, "_step": 58, "train/episode": 9.0, "train/reward": 4.344444274902344, "train/length": 149.6666717529297}

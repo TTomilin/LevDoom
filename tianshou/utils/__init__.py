@@ -7,7 +7,6 @@ from tianshou.utils.logger.wandb import WandbLogger
 from tianshou.utils.lr_scheduler import MultipleLRSchedulers
 from tianshou.utils.statistics import MovAvg, RunningMeanStd
 from tianshou.utils.warning import deprecation
-from tianshou.utils.wandb_utils import init_wandb
 
 __all__ = [
     "MovAvg",
@@ -20,5 +19,4 @@ __all__ = [
     "WandbLogger",
     "deprecation",
     "MultipleLRSchedulers",
-    "init_wandb",
 ]

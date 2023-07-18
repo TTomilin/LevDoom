@@ -89,7 +89,7 @@ def _worker(
                 if data is None:  # reset
                     obs = env.reset()
                 else:
-                    obs, reward, done, info = env.step(data)
+                    obs, reward, done, _, info = env.step(data)
                 if obs_bufs is not None:
                     _encode_obs(obs, obs_bufs)
                     obs = None

@@ -46,7 +46,6 @@ class DoomEnv(gym.Env):
         self.action_space = gym.spaces.Discrete(self.action_num)
 
         self.extra_statistics = ['kills', 'health', 'ammo', 'movement', 'kits_obtained', 'hits_taken']
-        self.spec = gym.envs.registration.EnvSpec(f'{task}-v0')
         self.count = 0
 
     def reset(self) -> np.ndarray:

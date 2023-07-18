@@ -12,12 +12,13 @@ class RescaleWrapper(gym.Wrapper):
     def __init__(self, env):
         gym.Wrapper.__init__(self, env)
 
-    def reset(self) -> np.ndarray:
-        return self.env.reset() / 255. * 2 - 1
+    def reset(self) -> (np.ndarray, bool):
+        return self.env.reset() / 255. * 2 - 1, None
 
-    def step(self, action: int) -> Tuple[np.ndarray, float, bool, Dict[str, Any]]:
+    def step(self, action: int) -> Tuple[np.ndarray, float, bool, bool, Dict[str, Any]]:
         state, reward, done, info = self.env.step(action)
-        return state / 255. * 2 - 1, reward, done, info
+        truncated = False
+        return state / 255. * 2 - 1, reward, done, truncated, info
 
 
 class NormalizeWrapper(gym.Wrapper):

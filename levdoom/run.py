@@ -12,6 +12,8 @@ import torch
 from gym.wrappers import NormalizeObservation, FrameStack
 from tensorboardX import SummaryWriter
 
+from tianshou.utils import TensorboardLogger
+
 sys.path.append(os.path.abspath(pathlib.Path(__file__).parent.parent))
 
 from levdoom.config import parse_args
@@ -19,7 +21,6 @@ from levdoom.env.base.scenario import DoomEnv
 from levdoom.utils.enums import DoomScenarioImpl, Algorithm
 from levdoom.utils.wrappers import ResizeWrapper, RescaleWrapper
 
-from levdoom.utils.wandb import init_wandb
 from tianshou.data.collector import Collector
 from tianshou.env import ShmemVectorEnv
 from tianshou.utils.logger.wandb import WandbLogger
@@ -36,13 +37,12 @@ def create_single_env(scenario: Type[DoomEnv], args: Namespace, task: str):
 
 def train(args: Namespace):
     args.tasks_joined = '_'.join(task for task in args.tasks)
-    init_wandb(args)
+    args.timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     args.experiment_dir = pathlib.Path(__file__).parent.resolve()
     print('Experiment directory', args.experiment_dir)
 
     # Determine the log path
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
-    log_path = f'{args.logdir}/{args.algorithm}/{args.scenario}/{args.seed}_{timestamp}'
+    log_path = f'{args.logdir}/{args.algorithm}/{args.scenario}/{args.seed}_{args.timestamp}'
 
     # Determine scenario and algorithm classes
     scenario_class = DoomScenarioImpl[args.scenario.upper()].value
@@ -82,29 +82,33 @@ def train(args: Namespace):
     policy = algorithm.get_policy()
     # Load a previous policy
     if args.resume_path:
-        policy.load_state_dict(torch.load(args.resume_path, map_location=args.device))
-        print("Loaded agent from: ", args.resume_path)
+        resume_path = f'{args.logdir}/{args.algorithm}/{args.scenario}/{args.resume_path}'
+        policy.load_state_dict(torch.load(resume_path, map_location=args.device))
+        print("Loaded agent from: ", resume_path)
 
     # Create replay buffer
     buffer = algorithm.create_buffer(len(train_envs))
 
     # Create collectors
-    train_collector = Collector(policy, train_envs, buffer, exploration_noise=True, extra_statistics=env.extra_statistics)
+    train_collector = Collector(policy, train_envs, buffer, exploration_noise=True,
+                                extra_statistics=env.extra_statistics)
     test_collector = Collector(policy, test_envs, exploration_noise=True, extra_statistics=env.extra_statistics)
 
     # Initialize logging
     writer = SummaryWriter(log_path)
     writer.add_text("args", str(args))
 
-    wandb_id = f'{args.algorithm}_seed_{args.seed}_{timestamp}'
+    wandb_id = f'{args.algorithm}_seed_{args.seed}_{args.timestamp}'
 
-    logger = WandbLogger(project=args.wandb_project,
-                         name=wandb_id,
-                         entity=args.wandb_user,
-                         run_id=wandb_id,
-                         config=args,
-                         extra_statistics=env.extra_statistics)
-    logger.load(writer)
+    logger = TensorboardLogger(writer) if not args.with_wandb else WandbLogger(project=args.wandb_project,
+                                                                               name=wandb_id,
+                                                                               entity=args.wandb_user,
+                                                                               run_id=wandb_id,
+                                                                               config=args,
+                                                                               extra_statistics=env.extra_statistics)
+
+    if args.with_wandb:
+        logger.load(writer)
 
     # Watch the agent's performance
     def watch():
@@ -123,7 +127,8 @@ def train(args: Namespace):
         else:
             print("Testing agent ...")
             test_collector.reset()
-            result = test_collector.collect(n_episode=args.test_num, render=args.render_sleep, frame_skip=args.frame_skip)
+            result = test_collector.collect(n_episode=args.test_num, render=args.render_sleep,
+                                            frame_skip=args.frame_skip)
         reward = result["reward"].mean()
         lengths = result["length"].mean() * args.frame_skip
         print(f'Mean reward (over {result["n/ep"]} episodes): {reward}')

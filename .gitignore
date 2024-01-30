@@ -153,5 +153,5 @@ videos/
 /levdoom/wandb/
 /levdoom/videos/
 /levdoom/wandb/
-/levdoom/plotting/logs/
-/levdoom/plotting/plots/
+/rl/plotting/logs/
+/rl/plotting/plots/

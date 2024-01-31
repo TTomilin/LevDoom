@@ -45,5 +45,5 @@ class BaseImpl(ABC):
     def save_best_fn(self, policy):
         torch.save(policy.state_dict(), f'{self.log_path}/policy_best.pth')
 
-    def save_checkpoint_fn(self, policy, env_step):
-        torch.save(policy.state_dict(), f'{self.log_path}/policy_{env_step}.pth')
+    def save_checkpoint_fn(self, epoch, env_step, gradient_step):
+        return f'{self.log_path}/policy_{epoch}_epochs_{env_step}_steps_{gradient_step}_gradients.pth'

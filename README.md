@@ -1,144 +1,136 @@
 # LevDoom
-LevDoom is a benchmark with difficulty levels based on visual modifications, intended for research in generalization of deep reinforcement learning agents. The benchmark is based upon [ViZDoom](https://github.com/mwydmuch/ViZDoom), a platform addressed to pixel based learning in the FPS game domain.
+LevDoom is a benchmark with difficulty levels based on visual modifications, intended for research 
+in generalization of deep reinforcement learning agents. The benchmark is based upon 
+[ViZDoom](https://github.com/Farama-Foundation/ViZDoom), a platform addressed to pixel based learning in the 
+FPS game domain.
 
 For more details please refer to our [CoG2022](https://ieee-cog.org/2022/assets/papers/paper_30.pdf) paper.
+To reproduce the paper results, follow the instructions in the [RL](rl/README.md) module.
 
 ![Default](assets/gifs/scenarios.gif)
 
 ## Installation
-1. Install the dependencies for ViZDoom: [Linux](https://github.com/mwydmuch/ViZDoom/blob/master/doc/Building.md#-linux), [MacOS](https://github.com/mwydmuch/ViZDoom/blob/master/doc/Building.md#-linux) or [Windows](https://github.com/mwydmuch/ViZDoom/blob/master/doc/Building.md#-windows).
-2. Clone the repository
+To install LevDoom from PyPi, just run:
+```bash
+$ pip install LevDoom
+```
+Alternatively, to install LevDoom from source, clone this repo, cd to it, and then:
+1. Clone the repository
 ```bash
 $ git clone https://github.com/TTomilin/LevDoom
 ```
-3. Navigate into the repository
+2. Navigate into the repository
 ```bash
 $ cd LevDoom
 ```
-4. Install the dependencies 
+3. Install the dependencies 
 ```bash 
-$ python install setup.py
+$ pip install .
 ```
 ## Environments
-The benchmark consists of 4 scenarios, each with multiple environments of increasing difficulty.
+The benchmark consists of 4 scenarios, each with 5 levels of increasing difficulty.
+The full list of environments can be found in the [LevDoom](levdoom/README.md) module.
 
-### Scenarios
-- Defend the Center
-- Health Gathering
-- Seek and Slay
-- Dodge Projectiles
+| Scenario          | Success Metric | Enemies | Weapon  | Items   | Max Steps | Actions | Stochasticity                   | 
+|-------------------|----------------|---------|---------|---------|-----------|---------|---------------------------------|
+| Defend the Center | Frames Alive   | &check; | &check; | &cross; | 2100      | 6       | Enemy behaviour                 | 
+| Health Gathering  | Frames Alive   | &cross; | &cross; | &check; | 2100      | 6       | Health kit spawn locations      |
+| Seek and Slay     | Kill Count     | &check; | &check; | &cross; | 1250      | 12      | Enemy and agent spawn locations |
+| Dodge Projectiles | Frames Alive   | &check; | &cross; | &cross; | 2100      | 6       | Enemy behaviour                 |
 
-### Modification Types
-- Textures
-- Obstacles
-- Entity Size
-- Entity Type
-- Entity Rendering
-- Enemy Speed
-- Agent Height
+
+### Environment Modifications
+LevDoom imposes generalization difficulty by modifying the base environment of a scenario.
+Each modification increases the difficulty level of the generalization task. 
+There are 8 types of modifications across all scenarios.
+
+| Modification     | Description                                                              |
+|------------------|--------------------------------------------------------------------------|
+| Textures         | Varies the appearance of the walls, ceilings and floors                  |
+| Obstacles        | Adds impassable obstructions to the map that impede the agent's movement |
+| Entity Size      | Changes the size of enemies and obtainable items                         |
+| Entity Type      | Changes the type of enemies and obtainable items                         |
+| Entity Rendering | Varies the rendering type of enemies and obtainable items                |
+| Entity Speed     | Increases the speed of enemies                                           |
+| Agent Height     | Vertically shifts the view point of the agent                            |
+
 
 ### Difficulty Levels
 The number of combined modifications determines the difficulty level.
 
-| Scenario          | Level 0                                                          | Level 1                                                                   | Level 2                                                                                                | Level 3                                                                                                                    | Level 4                                                            |
-|-------------------|------------------------------------------------------------------|---------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------|
-| Defend the Center | ![Default](assets/images/defend_the_center/Level0_Default.png?raw=true) | ![Gore](assets/images/defend_the_center/Level1_Gore.png?raw=true)                | ![Stone Wall + Flying Enemies](assets/images/defend_the_center/Level2_Stone_Wall_Flying_Enemies.png?raw=true) | ![Resized Flying Enemies + Mossy Bricks](assets/images/defend_the_center/Level3_Resized_Flying_Enemies_Mossy_Bricks.png?raw=true) | ![Complete](assets/images/defend_the_center/Level4_Complete.png?raw=true) |
-| Health Gathering  | ![Default](assets/images/health_gathering/Level0_Default.png?raw=true)  | ![Resized Kits](assets/images/health_gathering/Level1_Resized_Kits.png?raw=true) | ![Stone Wall + Flying Enemies](assets/images/health_gathering/Level2_Slime_Obstacles.png?raw=true)            | ![Lava + Supreme + Resized Agent](assets/images/health_gathering/Level3_Lava_Supreme_Resized_Agent.png?raw=true)                  | ![Complete](assets/images/health_gathering/Level4_Complete.png?raw=true)  |
-| Seek and Slay     | ![Default](assets/images/seek_and_slay/Level0_Default.png?raw=true)     | ![Shadows](assets/images/seek_and_slay/Level1_Shadows.png?raw=true)              | ![Obstacles + Resized Enemies](assets/images/seek_and_slay/Level2_Obstacles_Resized_Enemies.png?raw=true)     | ![Red + Obstacles + Invulnerable](assets/images/seek_and_slay/Level3_Red_Obstacles_Invulnerable.png?raw=true)                     | ![Complete](assets/images/seek_and_slay/Level4_Complete.png?raw=true)     |
-| Dodge Projectiles | ![Default](assets/images/dodge_projectiles/Level0_Default.png?raw=true) | ![Barons](assets/images/dodge_projectiles/Level1_Barons.png?raw=true)            | ![Revenants](assets/images/dodge_projectiles/Level2_Revenants.png?raw=true)                                   | ![Flames + Flaming Skulls + Mancubus](assets/images/dodge_projectiles/Level3_Flames_Flaming_Skulls_Mancubus.png?raw=true)         | ![Complete](assets/images/dodge_projectiles/Level4_Complete.png?raw=true) |
+| Scenario          | Level 0                                                        | Level 1                                                                 | Level 2                                                                                              | Level 3                                                                                                                  | Level 4                                                          |
+|-------------------|----------------------------------------------------------------|-------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------|
+| Defend the Center | ![Default](assets/images/defend_the_center/Level0_Default.png) | ![Gore](assets/images/defend_the_center/Level1_Gore.png)                | ![Stone Wall + Flying Enemies](assets/images/defend_the_center/Level2_Stone_Wall_Flying_Enemies.png) | ![Resized Flying Enemies + Mossy Bricks](assets/images/defend_the_center/Level3_Resized_Flying_Enemies_Mossy_Bricks.png) | ![Complete](assets/images/defend_the_center/Level4_Complete.png) |
+| Health Gathering  | ![Default](assets/images/health_gathering/Level0_Default.png)  | ![Resized Kits](assets/images/health_gathering/Level1_Resized_Kits.png) | ![Stone Wall + Flying Enemies](assets/images/health_gathering/Level2_Slime_Obstacles.png)            | ![Lava + Supreme + Resized Agent](assets/images/health_gathering/Level3_Lava_Supreme_Resized_Agent.png)                  | ![Complete](assets/images/health_gathering/Level4_Complete.png)  |
+| Seek and Slay     | ![Default](assets/images/seek_and_slay/Level0_Default.png)     | ![Shadows](assets/images/seek_and_slay/Level1_Shadows.png)              | ![Obstacles + Resized Enemies](assets/images/seek_and_slay/Level2_Obstacles_Resized_Enemies.png)     | ![Red + Obstacles + Invulnerable](assets/images/seek_and_slay/Level3_Red_Obstacles_Invulnerable.png)                     | ![Complete](assets/images/seek_and_slay/Level4_Complete.png)     |
+| Dodge Projectiles | ![Default](assets/images/dodge_projectiles/Level0_Default.png) | ![Barons](assets/images/dodge_projectiles/Level1_Barons.png)            | ![Revenants](assets/images/dodge_projectiles/Level2_Revenants.png)                                   | ![Flames + Flaming Skulls + Mancubus](assets/images/dodge_projectiles/Level3_Flames_Flaming_Skulls_Mancubus.png)         | ![Complete](assets/images/dodge_projectiles/Level4_Complete.png) |
 
-## Quick Start
-```bash
-$ python LevDoom/levdoom/run.py --algorithm ppo --scenario defend_the_center
+
+
+
+# Quick Start
+LevDoom follows the [Gymnasium](https://github.com/Farama-Foundation/Gymnasium) interface. You can create an environment using the `make` function:
+```python
+import levdoom
+
+env = levdoom.make('DefendTheCenterLevel0-v0')
+```
+You can also directly create all environments of a level using the `make_level` function:
+```python
+import levdoom
+from levdoom.utils.enums import Scenario
+
+level_envs = levdoom.make_level(Scenario.DODGE_PROJECTILES, level=3)
 ```
 
-## Baseline experiments
 
-[//]: # (### Results)
-[//]: # (TODO)
+## Examples
+Find examples of using LevDoom environments in the [examples](levdoom/examples) folder.
 
-### Instructions for reproduction
-- PPO
-```bash
-$ python LevDoom/levdoom/run.py --algorithm ppo --scenario $SCENARIO \
-        --tasks $TASKS --test_tasks $TEST_TASKS --seed $SEED --epoch 100
-```
-- Rainbow
-```bash
-$ python LevDoom/levdoom/run.py --algorithm rainbow --scenario $SCENARIO \
-        --tasks $TASKS --test_tasks $TEST_TASKS --seed $SEED --epoch 100 \ 
-        --lr 0.0001 --step-per-collect 10 --batch-size 64
-```
-- DQN
-```bash
-$ python LevDoom/levdoom/run.py --algorithm dqn --scenario $SCENARIO \
-        --tasks $TASKS --test_tasks $TEST_TASKS --seed $SEED --epoch 100 \ 
-        --lr 0.0001 --step-per-collect 10 --batch-size 64
-```
+### Single Environment
 
-#### Arguments
+```python
+import levdoom
 
-`$SEED = {1, 2, 3, 4, 5}`
-
-Use the following scenario specific arguments
-
-1. Defend the Center
-```
-$SCENARIO = defend_the_center
-$TASKS = default gore stone_wall fast_enemies mossy_bricks fuzzy_enemies flying_enemies resized_enemies
-$TEST_TASKS = stone_wall_flying_enemies resized_fuzzy_enemies resized_flying_enemies_mossy_bricks gore_stone_wall_fuzzy_enemies gore_mossy_bricks fast_resized_enemies_gore complete
-```
-2. Health Gathering
-```
-$SCENARIO = health_gathering
-$TASKS = default lava slime supreme poison obstacles stimpacks shaded_kits resized_kits
-$TEST_TASKS = supreme_poison slime_obstacles shaded_stimpacks poison_resized_shaded_kits obstacles_slime_stimpacks lava_supreme_resized_agent complete
-```
-3. Dodge Projectiles
-```
---scenario dodge_projectiles \
---tasks default cacodemons barons city flames mancubus resized_agent flaming_skulls \
---test_tasks city_resized_agent revenants barons_flaming_skulls city_arachnotron flames_flaming_skulls_mancubus
-```
-4. Seek and Slay
-```
---scenario seek_and_slay \
---tasks default red blue shadows obstacles invulnerable mixed_enemies resized_enemies \
---test_tasks blue_shadows obstacles_resized_enemies invulnerable_blue blue_mixed_resized_enemies red_obstacles_invulnerable resized_shadows_red complete
+env = levdoom.make('HealthGatheringLevel3_1-v0')
+env.reset()
+done = False
+steps = 0
+total_reward = 0
+while not done:
+    action = env.action_space.sample()
+    state, reward, done, truncated, info = env.step(action)
+    env.render()
+    steps += 1
+    total_reward += reward
+print(f"Episode finished in {steps} steps. Reward: {total_reward:.2f}")
+env.close()
 ```
 
-#### WandB support
+### Single Level
+```python
+import levdoom
+from levdoom.utils.enums import Scenario
 
-LevDoom also supports experiment monitoring with Weights and Biases. In order to setup WandB locally
-run `wandb login` in the terminal ([WandB Quickstart](https://docs.wandb.ai/quickstart#1.-set-up-wandb)).
-
-Example command line to run an experiment with WandB monitoring:
-
-```bash
-$ python LevDoom/levdoom/run.py --scenario health_gathering --algorithm ppo --with_wandb True \ 
-        --wandb_user <your_wandb_user> --wandb_key <your_wandb_api_key> --wandb_tags benchmark doom ppo
+max_steps = 100
+level_envs = levdoom.make_level(Scenario.SEEK_AND_SLAY, level=1, max_steps=max_steps)
+for env in level_envs:
+    env.reset()
+    total_reward = 0
+    for i in range(max_steps):
+        action = env.action_space.sample()
+        state, reward, done, truncated, info = env.step(action)
+        env.render()
+        total_reward += reward
+        if done or truncated:
+            break
+    print(f"{env.unwrapped.name} finished in {i + 1} steps. Reward: {total_reward:.2f}")
+    env.close()
 ```
-
-A total list of WandB settings:
-
-```
---with_wandb: Enables Weights and Biases integration (default: False)
---wandb_user: WandB username (entity). Must be specified from command line! Also see https://docs.wandb.ai/quickstart#1.-set-up-wandb (default: None)
---wandb_key: WandB API key. Might need to be specified if running from a remote server. (default: None)
---wandb_project: WandB "Project" (default: LevDoom)
---wandb_group: WandB "Group" (to group your experiments). By default this is the name of the env. (default: None)
---wandb_job_type: WandB job type (default: SF)
---wandb_tags: [WANDB_TAGS [WANDB_TAGS ...]] Tags can help with finding experiments in WandB web console (default: [])
-```
-
-Once the experiment is started the link to the monitored session is going to be available in the logs (or by searching in Wandb Web console).
-
-## Reference
-Implementation of DQN, Rainbow and PPO from https://github.com/thu-ml/tianshou
 
 ## Citation
-Cite as
-```bib
+If you use our work in your research, please cite it as follows:
+```bibtex
 @inproceedings{tomilin2022levdoom,
   title     = {LevDoom: A Benchmark for Generalization on Level Difficulty in Reinforcement Learning},
   author    = {Tristan Tomilin and Tianhong Dai and Meng Fang and Mykola Pechenizkiy},

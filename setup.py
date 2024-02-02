@@ -12,7 +12,7 @@ rl_requirements = [
 
 setup(
     name="LevDoom",
-    version='1.0.0',
+    version='1.0.1',
     description="LevDoom: A Generalization Benchmark for Deep Reinforcement Learning",
     long_description=open("README.md", encoding="utf8").read(),
     long_description_content_type="text/markdown",

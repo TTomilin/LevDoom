@@ -7,12 +7,12 @@ We evaluate the generalizability of three popular RL algorithms on the LevDoom b
 The agent is trained on levels 0 and 1 in a multi-task setting and tested on the remaining highger levels. 
 The results are aggregated over 5 seeds. Each scenario has its own success metric.
 
-![Main](plotting/plots/curve_main.png)
+![Main](../assets/images/results/curve_main.png)
 
 ### Level Difficulty
 Aggregated results across all evaluation levels for each scenario. The results are averaged over 5 seeds.
 
-| ![DTC](plotting/plots/curve_defend_the_center_level.png) | ![HG](plotting/plots/curve_health_gathering_level.png) | ![SAS](plotting/plots/curve_seek_and_slay_level.png) | ![DP](plotting/plots/curve_dodge_projectiles_level.png) |
+| ![DTC](../assets/images/results/curve_defend_the_center_level.png) | ![HG](../assets/images/results/curve_health_gathering_level.png) | ![SAS](../assets/images/results/curve_seek_and_slay_level.png) | ![DP](../assets/images/results/curve_dodge_projectiles_level.png) |
 |:--------------------------------------------------------:|:------------------------------------------------------:|:----------------------------------------------------:|:------------------------------------------------------:|
 
 

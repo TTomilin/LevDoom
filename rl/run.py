@@ -13,7 +13,7 @@ from tianshou.utils import TensorboardLogger
 from tianshou.utils.logger.wandb import WandbLogger
 
 import levdoom
-from levdoom.utils.enums import Scenario
+from levdoom import Scenario
 from rl.config import parse_args, Algorithm
 
 

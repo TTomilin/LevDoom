@@ -1,5 +1,5 @@
 import levdoom
-from levdoom.utils.enums import Scenario
+from levdoom import Scenario
 
 
 def main():

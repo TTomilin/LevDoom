@@ -108,5 +108,5 @@ if __name__ == '__main__':
     if cur_group == 'dodge_projectiles':
         plt.legend(loc='lower right', prop={'size': font_size})
     plt.tight_layout()
-    plt.savefig('curve_{}_level.png'.format(cur_group))
+    plt.savefig('plots/curve_{}_level.png'.format(cur_group))
     plt.show()

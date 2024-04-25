@@ -26,14 +26,51 @@ ENVIRONMENTS = {
 }
 
 TRANSLATIONS = {
+    # Algorithms
     'dqn': 'DQN',
     'ppo': 'PPO',
     'rainbow': 'Rainbow',
 
+    # Scenarios
     'defend_the_center': 'Defend the Center',
     'health_gathering': 'Health Gathering',
     'seek_and_slay': 'Seek and Slay',
     'dodge_projectiles': 'Dodge Projectiles',
+
+    # Common
+    'complete': 'Ultimate Gauntlet',
+
+    # Defend the Center
+    'stone_wall_flying_enemies': 'Skyward Stronghold',
+    'resized_fuzzy_enemies': 'Giant Phantoms',
+    'gore_mossy_bricks': 'Ruined Bastion',
+    'gore_stone_wall_fuzzy_enemies': 'Spectral Fortress',
+    'resized_flying_enemies_mossy_bricks': 'Colossal Sky Siege',
+    'fast_resized_enemies_gore': 'Rapid Rampage',
+
+    # Health Gathering
+    'supreme_poison': 'Supreme Poison',
+    'slime_obstacles': 'Sludge Barriers',
+    'shaded_stimpacks': 'Shady Stimpacks',
+    'poison_resized_shaded_kits': 'Toxic Overload',
+    'obstacles_slime_stimpacks': 'Mire of Survival',
+    'lava_supreme_resized_agent': 'Supreme Lava',
+
+    # Seek and Slay
+    'blue_shadows': 'Azure Veil',
+    'obstacles_resized_enemies': 'Hazy Maze',
+    'invulnerable_blue': 'Cerulean Sanctuary',
+    'blue_mixed_resized_enemies': 'Sapphire Titans',
+    'red_obstacles_invulnerable': 'Ruby Ramparts',
+    'resized_shadows_red': 'Crimson Eclipse',
+
+    # Dodge Projectiles
+    'city_resized_agent': 'Urban Assault',
+    'revenants': 'Spectral Hunt',
+    'barons_flaming_skulls': 'Infernal Court',
+    'city_arachnotron': 'Metro Web',
+    'flames_flaming_skulls_mancubus': 'Hellfire Colossus',
+    'resized_agent_revenants': 'Colossal Ghosts',
 }
 
 
@@ -82,7 +119,7 @@ if __name__ == '__main__':
                 ax[j][i].plot(x_steps, mean, label=TRANSLATIONS[alg], linewidth=2)
                 ax[j, i].fill_between(x_steps, mean - ci, mean + ci, alpha=0.3)
 
-            title_str = convert_names(env)
+            title_str = TRANSLATIONS[env] if env in TRANSLATIONS else convert_names(env)
             ax[j, i].set_xlim([0, 1])
             ax[j, i].set_title(title_str, fontsize=8)
             ax[j, i].tick_params(labelbottom=True, labelleft=True, labelsize=7)
@@ -92,5 +129,5 @@ if __name__ == '__main__':
     plt.tight_layout(rect=[0.02, 0.1, 1, 1])
     fig.supxlabel('Timesteps ' + r'$(\times 10^{7})$', fontsize=15, y=0.07)
     fig.supylabel('Score', fontsize=17)
-    plt.savefig('curve_main.png')
+    plt.savefig('plots/curve_main.png')
     plt.show()

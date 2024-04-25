@@ -92,4 +92,4 @@ if __name__ == '__main__':
         plt.yticks(fontsize=font_size)
         plt.legend(loc='lower right', prop={'size': font_size})
     plt.tight_layout()
-    plt.savefig('curve_{}_level_train.pdf'.format(cur_group))
+    plt.savefig('plots/curve_{}_level_train.pdf'.format(cur_group))

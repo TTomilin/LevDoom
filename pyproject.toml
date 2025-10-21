@@ -19,7 +19,8 @@ classifiers = [
 dependencies = [
     "vizdoom",
     "scipy",
-    "gymnasium",
+    "opencv-python",
+    "gymnasium>=0.28",
 ]
 
 [project.optional-dependencies]

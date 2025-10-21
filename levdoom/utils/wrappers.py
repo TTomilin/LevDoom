@@ -16,7 +16,7 @@ class RescaleObservation(gymnasium.ObservationWrapper):
 
 
 class RGBStack(gymnasium.ObservationWrapper):
-    """Combine the stacked frames with RGB colours. [n_stack, h, w, 3] -> [h, w, n_stack * 3]"""
+    """Combine the stacked frames with RGB colours. [n_stack, h, w, 3] -> [n_stack * 3, h, w]"""
 
     def __init__(self, env):
         super(RGBStack, self).__init__(env)
@@ -30,7 +30,7 @@ class RGBStack(gymnasium.ObservationWrapper):
 
     def observation(self, observation: ObsType) -> WrapperObsType:
         n_stack, height, width, channels = observation.shape
-        return np.reshape(observation, (n_stack * channels, height, width))
+        return np.transpose(observation, (0, 3, 1, 2)).reshape(n_stack * channels, height, width)
 
 
 class WrapperHolder:

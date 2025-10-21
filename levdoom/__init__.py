@@ -121,8 +121,10 @@ def wrap_env(env: Env, **kwargs):
     for wrapper in reward_wrappers:
         env = wrapper.wrapper_class(env, **wrapper.kwargs)
     env = ResizeObservation(env, shape=(kwargs.get('frame_height', 84), kwargs.get('frame_width', 84)))
-    env = RescaleObservation(env)
-    env = NormalizeObservation(env)
+    if kwargs.get('rescale_observation', True):
+        env = RescaleObservation(env)
+    if kwargs.get('normalize_observation', True):
+        env = NormalizeObservation(env)
     env = FrameStack(env, kwargs.get('frame_stack', 4))
     env = RGBStack(env)
     return env

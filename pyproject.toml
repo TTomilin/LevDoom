@@ -1,0 +1,41 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "LevDoom"
+version = "1.0.2"
+description = "LevDoom: A Generalization Benchmark for Deep Reinforcement Learning"
+readme = { file = "README.md", content-type = "text/markdown" }
+requires-python = ">=3.8"
+license = { text = "MIT" }
+authors = [{ name = "Tristan Tomilin", email = "tristan.tomilin@hotmail.com" }]
+keywords = ["vizdoom", "reinforcement learning", "benchmarking", "generalization"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "vizdoom",
+    "scipy",
+    "gymnasium",
+]
+
+[project.optional-dependencies]
+rl = ["tianshou", "wandb"]
+
+[project.urls]
+Homepage = "https://github.com/TTomilin/LevDoom"
+Issues = "https://github.com/TTomilin/LevDoom/issues"
+
+[tool.setuptools]
+include-package-data = true
+
+# Ensure packages are found (only levdoom tree)
+[tool.setuptools.packages.find]
+include = ["levdoom", "levdoom.*"]
+
+# Ship non-.py assets (cfg/wad/etc.)
+[tool.setuptools.package-data]
+levdoom = ["**/*.cfg", "**/*.wad", "**/*.ini", "**/*.json", "**/*.png"]

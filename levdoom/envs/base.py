@@ -115,6 +115,7 @@ class DoomEnv(gymnasium.Env):
         self.clear_episode_statistics()
         state = self.game.get_state().screen_buffer
         state = np.transpose(state, [1, 2, 0])
+        self.obs_dtype = state.dtype
         return state, {}
 
     def step(self, action: int) -> Tuple[np.ndarray, float, bool, bool, Dict[str, Any]]:
@@ -141,7 +142,7 @@ class DoomEnv(gymnasium.Env):
         truncated = self.game.is_episode_finished()
         info = self.extra_statistics()
 
-        observation = np.transpose(state.screen_buffer, [1, 2, 0]) if state else np.float32(np.zeros(self.game_res))
+        observation = np.transpose(state.screen_buffer, [1, 2, 0]) if state else np.zeros(self.game_res, dtype=self.obs_dtype)
         if not done:
             self.game_variable_buffer.append(state.game_variables)
 

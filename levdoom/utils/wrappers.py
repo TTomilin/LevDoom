@@ -69,10 +69,10 @@ class GameVariableRewardWrapper(RewardWrapper):
         self.decrease = decrease
 
     def reward(self, reward):
-        if len(self.game_variable_buffer) < 2:
+        if len(self.unwrapped.game_variable_buffer) < 2:
             return reward
-        vars_cur = self.game_variable_buffer[-1]
-        vars_prev = self.game_variable_buffer[-2]
+        vars_cur = self.unwrapped.game_variable_buffer[-1]
+        vars_prev = self.unwrapped.game_variable_buffer[-2]
 
         var_cur = vars_cur[self.var_index]
         var_prev = vars_prev[self.var_index]
@@ -93,8 +93,8 @@ class MovementRewardWrapper(RewardWrapper):
         self.scaler = scaler
 
     def reward(self, reward):
-        if len(self.distance_buffer) < 2:
+        if len(self.unwrapped.distance_buffer) < 2:
             return reward
-        distance = self.distance_buffer[-1]
+        distance = self.unwrapped.distance_buffer[-1]
         reward += distance * self.scaler  # Increase the reward for movement linearly
         return reward

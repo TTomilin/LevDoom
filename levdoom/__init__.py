@@ -5,7 +5,7 @@ from typing import List, Callable
 import gymnasium
 from gymnasium import Env
 from gymnasium.envs.registration import register, WrapperSpec
-from gymnasium.wrappers import ResizeObservation, NormalizeObservation, FrameStack
+from gymnasium.wrappers import ResizeObservation, NormalizeObservation, FrameStackObservation
 
 from levdoom.envs.base import DoomEnv
 from levdoom.envs.defend_the_center.scenario import DefendTheCenter
@@ -125,7 +125,7 @@ def wrap_env(env: Env, **kwargs):
         env = RescaleObservation(env)
     if kwargs.get('normalize_observation', True):
         env = NormalizeObservation(env)
-    env = FrameStack(env, kwargs.get('frame_stack', 4))
+    env = FrameStackObservation(env, kwargs.get('frame_stack', 4))
     env = RGBStack(env)
     return env
 

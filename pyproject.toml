@@ -20,7 +20,7 @@ dependencies = [
     "vizdoom",
     "scipy",
     "opencv-python",
-    "gymnasium>=0.28",
+    "gymnasium>=1.0.0",
 ]
 
 [project.optional-dependencies]

@@ -3,16 +3,12 @@ from collections import deque
 from scipy import spatial
 from vizdoom import ScreenResolution
 
-resolutions = {'800X600': ScreenResolution.RES_800X600,
-               '640X480': ScreenResolution.RES_640X480,
-               '320X240': ScreenResolution.RES_320X240,
-               '160X120': ScreenResolution.RES_160X120}
-
 
 def get_screen_resolution(resolution: str) -> ScreenResolution:
-    if resolution not in resolutions:
-        raise ValueError(f'Invalid resolution: {resolution}')
-    return resolutions[resolution]
+    try:
+        return getattr(ScreenResolution, f"RES_{resolution}")
+    except AttributeError as e:
+        raise ValueError(f"Invalid resolution: {resolution}")
 
 
 def distance_traversed(game_var_buf: deque, x_index: int, y_index: int) -> float:

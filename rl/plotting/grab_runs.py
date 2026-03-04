@@ -1,6 +1,7 @@
-import wandb
-import os
 import argparse
+import os
+
+import wandb
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--group-name', type=str, default='dodge_projectiles')

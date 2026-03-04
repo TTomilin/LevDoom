@@ -2,12 +2,8 @@ import argparse
 import pickle
 
 import numpy as np
-import tensorflow.compat.v1 as tf
 from matplotlib import pyplot as plt
 from scipy.stats import t
-
-# disable tensorflow-v2
-tf.disable_v2_behavior()
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--group-name', type=str, default='dodge_projectiles')
@@ -38,7 +34,7 @@ TRANSLATIONS = {
     'dodge_projectiles': 'Dodge Projectiles',
 
     # Common
-    'complete': 'Ultimate Gauntlet',
+    'complete': 'Final Gauntlet',
 
     # Defend the Center
     'stone_wall_flying_enemies': 'Skyward Stronghold',
@@ -101,14 +97,14 @@ if __name__ == '__main__':
     dof = seeds - 1
     confidence = 0.95
     significance = (1 - confidence) / 2
-    plt.style.use('seaborn-deep')
+    plt.style.use('seaborn-v0_8-deep')
     fig, ax = plt.subplots(len(scenarios), n_envs, sharey='row', sharex='all', figsize=(16, 9))
     for j, scenario in enumerate(scenarios):
         envs = ENVIRONMENTS[scenario]
         for i, env in enumerate(envs):
             for k, alg in enumerate(algos):
                 scores, x_steps = read_pkl(alg, logdir, scenario)
-                x_steps = x_steps / 10**7
+                x_steps = x_steps / 10 ** 7
                 values = scores[env]
                 mean = np.nanmean(values, axis=0)
                 std = np.nanstd(values, axis=0)

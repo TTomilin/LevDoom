@@ -2,12 +2,8 @@ import argparse
 import pickle
 
 import numpy as np
-import tensorflow.compat.v1 as tf
 from matplotlib import pyplot as plt
 from scipy.stats import t
-
-# disable tensorflow-v2
-tf.disable_v2_behavior()
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--group-name', type=str, default='seek_and_slay')
@@ -63,7 +59,7 @@ def convert_names(str):
 
 
 if __name__ == '__main__':
-    plt.style.use('seaborn-deep')
+    plt.style.use('seaborn-v0_8-deep')
     args = parser.parse_args()
     font_size = 30
     cur_group = args.group_name
@@ -75,7 +71,7 @@ if __name__ == '__main__':
     significance = (1 - confidence) / 2
     #
     rainbow_scores, x_steps = read_pkl('rainbow', logdir, cur_group)
-    x_steps = x_steps / (10**7)
+    x_steps = x_steps / (10 ** 7)
     # plot
     plt.figure(figsize=(12, 8))
     _, ax = plt.subplots(figsize=(12, 8))

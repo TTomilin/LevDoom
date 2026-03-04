@@ -1,11 +1,7 @@
 import argparse
 import pickle
 
-import tensorflow.compat.v1 as tf
 from scipy.stats import t
-
-# disable tensorflow-v2
-tf.disable_v2_behavior()
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--group-name', type=str, default='dodge_projectiles')
@@ -36,7 +32,7 @@ TRANSLATIONS = {
     'dodge_projectiles': 'Dodge Projectiles',
 
     # Common
-    'complete': 'Ultimate Gauntlet',
+    'complete': 'Final Gauntlet',
 
     # Defend the Center
     'stone_wall_flying_enemies': 'Skyward Stronghold',
@@ -102,7 +98,7 @@ if __name__ == '__main__':
     dof = seeds - 1
     confidence = 0.95
     significance = (1 - confidence) / 2
-    plt.style.use('seaborn-deep')
+    plt.style.use('seaborn-v0_8-deep')
     fig, axarr = plt.subplots(len(scenarios), n_envs + 2, figsize=(16, 9),  # Add two dummy columns for spacing
                               sharey='row', gridspec_kw={
             'width_ratios': [1, 1, 1, 0.01, 1, 1, 1, 0.01, 1]})  # Add extra width for spacing columns
